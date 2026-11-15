@@ -128,13 +128,15 @@
             padding: 1.25rem 1rem;
         }
         .school-hero-logo {
-            width: 6.5rem;
-            height: 6.5rem;
-            border-radius: 1.25rem;
+            max-width: 100%;
+            max-height: 7.5rem;
+            width: auto;
+            height: auto;
+            border-radius: 1rem;
             object-fit: contain;
             background-color: var(--input-bg);
             border: 2px solid var(--bar-border);
-            padding: 0.25rem;
+            padding: 0.3rem;
         }
         .school-hero-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
         .school-hero-motto { font-size: 0.8rem; font-style: italic; color: var(--muted-fg); }
@@ -596,7 +598,7 @@
             </button>
 
             <!-- Emblem / School Logo Preview -->
-            <img id="settingsLogoPreview" src="icon.png" alt="School Logo" style="width:6.5rem;height:6.5rem;margin:0 auto;border-radius:1.25rem;object-fit:contain;background:var(--input-bg);border:2px solid var(--bar-border);padding:0.25rem;" />
+            <img id="settingsLogoPreview" src="icon.png" alt="School Logo" style="max-width:100%;max-height:7.5rem;width:auto;height:auto;margin:0 auto;border-radius:1rem;object-fit:contain;background:var(--input-bg);border:2px solid var(--bar-border);padding:0.3rem;" />
 
             <div>
                 <h3 style="font-size:1rem;font-weight:800;">School & App Settings</h3>
@@ -797,10 +799,9 @@
         ========================================================= */
         function renderSchoolBranding() {
             const logoSrc = settings.schoolLogoDataUrl || 'icon.png';
-            const smallSrc = settings.schoolLogoDataUrl || 'small-icon.png';
             document.getElementById('mainSchoolLogo').src = logoSrc;
             document.getElementById('settingsLogoPreview').src = logoSrc;
-            document.getElementById('headerLogoImg').src = smallSrc;
+            document.getElementById('headerLogoImg').src = 'small-icon.png';
 
             const nameEl = document.getElementById('mainSchoolName');
             nameEl.textContent = settings.schoolName.trim() || 'Your School Name';
@@ -1454,17 +1455,26 @@
 
             let y = 56;
 
-            // Top: Small school logo + School name + Motto underneath
-            const logoSize = 84;
+            // Top: School logo (preserving natural square, circle, or rectangle aspect ratio) + School name + Motto underneath
+            const maxLogoBox = 90;
             let textStartX = pad;
             if (logoImg) {
+                const aspect = logoImg.width / logoImg.height;
+                let lW = maxLogoBox, lH = maxLogoBox;
+                if (aspect > 1) { lH = maxLogoBox / aspect; }
+                else { lW = maxLogoBox * aspect; }
+                
+                // Center vertically within the logo header block
+                const lX = pad;
+                const lY = y + (maxLogoBox - lH) / 2;
+
                 ctx.save();
                 ctx.beginPath();
-                ctx.roundRect(pad, y, logoSize, logoSize, 16);
+                ctx.roundRect(lX, lY, lW, lH, 14);
                 ctx.clip();
-                ctx.drawImage(logoImg, pad, y, logoSize, logoSize);
+                ctx.drawImage(logoImg, lX, lY, lW, lH);
                 ctx.restore();
-                textStartX = pad + logoSize + 22;
+                textStartX = pad + maxLogoBox + 22;
             }
 
             ctx.fillStyle = '#0f172a';
@@ -1477,7 +1487,7 @@
                 ctx.fillText(schoolMotto, textStartX, y + 70);
             }
 
-            y += logoSize + 24;
+            y += maxLogoBox + 24;
 
             // Divider
             ctx.strokeStyle = '#e2e8f0';
