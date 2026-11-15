@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="black">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Classroom Helper</title>
+
+    <!-- PWA & Theme Integration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <style>
+        /* Offline Self-Contained Utility & Theme System (Zero External Dependencies) */
+        :root {
+            --accent-color: #10b981;
+            --page-bg: #000000;
+            --page-fg: #f1f5f9;
+            --panel-bg: #18181b;
+            --input-bg: #09090b;
+            --bar-bg: rgba(0, 0, 0, 0.95);
+            --bar-border: #27272a;
+            --muted-fg: #a1a1aa;
+            --subtle-fg: #71717a;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        [data-theme="dark"] {
+            --page-bg: #0f172a;
+            --panel-bg: #1e293b;
+            --input-bg: #020617;
+            --bar-bg: rgba(15, 23, 42, 0.95);
+            --bar-border: #334155;
+            --muted-fg: #94a3b8;
+            --subtle-fg: #64748b;
+        }
+        [data-theme="light"] {
+            --page-bg: #f1f5f9;
+            --page-fg: #0f172a;
+            --panel-bg: #ffffff;
+            --input-bg: #f8fafc;
+            --bar-bg: rgba(255, 255, 255, 0.95);
+            --bar-border: #cbd5e1;
+            --muted-fg: #475569;
+            --subtle-fg: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--page-bg);
+            color: var(--page-fg);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.2s, color 0.2s;
+            user-select: none;
+            padding-bottom: 4.5rem;
+        }
+        input, textarea, select {
+            user-select: text;
+            font-family: inherit;
+        }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background-color: var(--bar-bg);
+            border-bottom: 1px solid var(--bar-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 0.75rem; }
+        .header-logo {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 9999px;
+            object-fit: cover;
+            border: 1px solid var(--bar-border);
+        }
+        .header-title { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; color: var(--accent-color); }
+        .header-sub { font-size: 0.65rem; color: var(--muted-fg); font-weight: 500; }
+
+        .icon-btn {
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            color: var(--muted-fg);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .icon-btn:hover, .icon-btn:active { background-color: rgba(128,128,128,0.15); color: var(--page-fg); }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 1.25rem;
+            padding: 1.15rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+
+        .school-hero {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.25rem 1rem;
+        }
+        .school-hero-logo {
+            width: 6.5rem;
+            height: 6.5rem;
+            border-radius: 1.25rem;
+            object-fit: contain;
+            background-color: var(--input-bg);
+            border: 2px solid var(--bar-border);
+            padding: 0.25rem;
+        }
+        .school-hero-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
+        .school-hero-motto { font-size: 0.8rem; font-style: italic; color: var(--muted-fg); }
+        .school-hero-teacher { font-size: 0.72rem; color: var(--subtle-fg); margin-top: 0.15rem; }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.65rem 1rem;
+            border-radius: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+        .btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--page-fg);
+            border: 1px solid var(--bar-border);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.55rem 0.9rem;
+            border-radius: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.55rem 0.9rem;
+            border-radius: 0.85rem;
+        }
+        .btn-danger:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .section-title { font-size: 0.95rem; font-weight: 700; }
+
+        .class-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 1.1rem;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            transition: border-color 0.15s;
+        }
+        .class-card:hover { border-color: var(--accent-color); }
+        .class-card-main {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+            padding: 0.2rem 0;
+        }
+        .class-name { font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .class-meta { font-size: 0.75rem; color: var(--muted-fg); margin-top: 0.2rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .class-actions { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
+        .tiny-action-btn {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.6rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted-fg);
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+        }
+        .tiny-action-btn:hover { color: var(--page-fg); border-color: var(--accent-color); }
+        .tiny-action-btn.del:hover { color: #ef4444; border-color: #ef4444; }
+
+        /* Tabs inside Class View */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 0.9rem;
+            padding: 0.25rem;
+            gap: 0.25rem;
+        }
+        .mode-tab {
+            padding: 0.55rem;
+            border-radius: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--muted-fg);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .mode-tab.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        /* Student Row */
+        .student-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.65rem 0.8rem;
+            border-radius: 0.9rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+        }
+        .student-name { font-size: 0.88rem; font-weight: 600; flex: 1; min-width: 0; word-break: break-word; }
+        .status-btn-group { display: flex; gap: 0.35rem; flex-shrink: 0; }
+        .status-btn {
+            padding: 0.42rem 0.75rem;
+            border-radius: 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid var(--bar-border);
+            color: var(--muted-fg);
+            background-color: var(--panel-bg);
+            transition: all 0.12s;
+        }
+        .status-btn.present.active {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: #ffffff;
+        }
+        .status-btn.absent.active {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: #ffffff;
+        }
+        .status-btn.hw-done.active {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: #ffffff;
+        }
+        .status-btn.hw-missing.active {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+            color: #ffffff;
+        }
+
+        /* Form inputs */
+        .field-group { display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
+        .field-label { font-size: 0.75rem; font-weight: 700; color: var(--muted-fg); }
+        .field-input, .field-textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+            color: var(--page-fg);
+            border-radius: 0.8rem;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .field-input:focus, .field-textarea:focus { border-color: var(--accent-color); }
+
+        /* Modals */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background-color: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .modal-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 1.5rem;
+            width: 100%;
+            max-width: 26rem;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.35rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: var(--muted-fg);
+            padding: 0.35rem;
+            border-radius: 0.5rem;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 4.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 70;
+            padding: 0.55rem 1rem;
+            border-radius: 0.85rem;
+            background-color: #18181b;
+            color: #f8fafc;
+            border: 1px solid #3f3f46;
+            font-size: 0.78rem;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        /* Theme & Accent swatches */
+        .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+        .theme-pill {
+            padding: 0.45rem;
+            border-radius: 0.7rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid var(--bar-border);
+            text-align: center;
+        }
+        .swatch-row { display: flex; justify-content: space-around; align-items: center; padding-top: 0.35rem; }
+        .swatch { width: 1.75rem; height: 1.75rem; border-radius: 9999px; border: 2px solid rgba(255,255,255,0.2); }
+
+        .summary-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.8rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+        }
+
+        .history-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 0.9rem;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        footer { padding: 1.25rem 0; text-align: center; }
+        .footer-sig { font-size: 0.65rem; font-family: var(--font-mono); letter-spacing: 0.14em; color: var(--subtle-fg); text-transform: uppercase; }
+
+        svg.ico { width: 1.05rem; height: 1.05rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        svg.ico-lg { width: 1.25rem; height: 1.25rem; }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="app-header">
+        <div class="header-left">
+            <img id="headerLogoImg" src="small-icon.png" alt="Logo" class="header-logo" />
+            <div>
+                <h1 id="appTitleHeader" class="header-title">CLASSROOM HELPER</h1>
+                <p id="appSubtitleHeader" class="header-sub">Attendance & Homework</p>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.35rem;">
+            <button id="homeBtn" class="icon-btn hidden" aria-label="Back to classes" title="Classes">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            </button>
+            <button id="openSettingsBtn" class="icon-btn" aria-label="Open settings" title="Settings">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- MAIN HOME VIEW (TITLE SCREEN) -->
+    <main id="homeView">
+        <!-- Middle Large School Logo & Info -->
+        <section class="panel school-hero">
+            <img id="mainSchoolLogo" src="icon.png" alt="School Logo" class="school-hero-logo" />
+            <div id="mainSchoolName" class="school-hero-name">Your School Name</div>
+            <div id="mainSchoolMotto" class="school-hero-motto hidden"></div>
+            <div id="mainTeacherDisplay" class="school-hero-teacher">Teacher: Not set (configure in Settings)</div>
+        </section>
+
+        <!-- Classes Header + Add Class Button -->
+        <div class="section-header">
+            <h2 class="section-title">My Classes</h2>
+            <button id="openAddClassBtn" class="btn-primary">
+                <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>New Class</span>
+            </button>
+        </div>
+
+        <!-- Classes List -->
+        <div id="classListContainer" style="display:flex;flex-direction:column;gap:0.65rem;"></div>
+    </main>
+
+    <!-- CLASS ATTENDANCE & HOMEWORK VIEW -->
+    <main id="classView" class="hidden">
+        <section class="panel" style="display:flex;flex-direction:column;gap:0.85rem;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;">
+                <div>
+                    <h2 id="activeClassTitle" style="font-size:1.15rem;font-weight:800;">Grade 6</h2>
+                    <p id="activeClassMeta" style="font-size:0.76rem;color:var(--muted-fg);margin-top:0.15rem;">Start Time: 08:00 AM • Today</p>
+                </div>
+                <input type="date" id="sessionDateInput" class="field-input" style="width:auto;padding:0.4rem 0.6rem;font-size:0.78rem;" />
+            </div>
+
+            <!-- Mode Switcher: Attendance vs Homework -->
+            <div class="mode-tabs">
+                <button id="tabAttendance" class="mode-tab active" onclick="switchClassTab('attendance')">Attendance</button>
+                <button id="tabHomework" class="mode-tab" onclick="switchClassTab('homework')">Homework</button>
+            </div>
+
+            <!-- Homework Topic Input (Visible only on Homework tab) -->
+            <div id="homeworkTopicBox" class="field-group hidden">
+                <label class="field-label" for="homeworkTopicInput">Homework Title / Assignment (Optional)</label>
+                <input id="homeworkTopicInput" type="text" class="field-input" placeholder="e.g. Workbook Page 14-15" />
+            </div>
+
+            <!-- Quick Mark All + Live Counts -->
+            <div class="summary-bar">
+                <span id="liveCountText">Present: 0 • Absent: 0</span>
+                <div style="display:flex;gap:0.4rem;">
+                    <button id="markAllPositiveBtn" class="btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.7rem;">All Present</button>
+                </div>
+            </div>
+
+            <!-- Student List -->
+            <div id="studentRollList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+
+            <!-- Bottom Export Button -->
+            <div style="padding-top:0.4rem;display:flex;flex-direction:column;gap:0.5rem;">
+                <button id="exportPngBtn" class="btn-primary" style="width:100%;padding:0.85rem;font-size:0.9rem;">
+                    <svg class="ico ico-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>Export PNG Report</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER SIGNATURE -->
+    <footer>
+        <p class="footer-sig">Made by REAPER-357</p>
+    </footer>
+
+    <!-- ADD / EDIT CLASS MODAL -->
+    <div id="classFormModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('classFormModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 id="classFormTitle" style="font-size:1.05rem;font-weight:800;">Create Class</h3>
+
+            <div class="field-group">
+                <label class="field-label" for="classNameInput">Class Name</label>
+                <input id="classNameInput" type="text" class="field-input" placeholder="e.g. Grade 6" />
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="classStartTimeInput">Start Time</label>
+                <input id="classStartTimeInput" type="time" class="field-input" value="08:00" />
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="bulkStudentsTextarea">Paste Student Names (One per line or comma-separated)</label>
+                <textarea id="bulkStudentsTextarea" rows="5" class="field-textarea" placeholder="Sovann&#10;Dara&#10;Bopha&#10;Sokha"></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:0.25rem;">
+                    <button type="button" id="addBulkStudentsBtn" class="btn-secondary">
+                        <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Add Names to Roster</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="field-label">Current Roster (<span id="draftRosterCount">0</span>)</span>
+                    <button type="button" id="clearDraftRosterBtn" style="font-size:0.7rem;color:#ef4444;font-weight:600;">Clear All</button>
+                </div>
+                <div id="draftRosterList" style="max-height:11rem;overflow-y:auto;display:flex;flex-direction:column;gap:0.35rem;padding-top:0.2rem;"></div>
+            </div>
+
+            <button type="button" id="saveClassBtn" class="btn-primary" style="width:100%;padding:0.75rem;">Save Class</button>
+        </div>
+    </div>
+
+    <!-- HISTORY MODAL -->
+    <div id="historyModal" class="modal-backdrop hidden">
+        <div class="modal-card" style="max-width:29rem;">
+            <button class="modal-close" onclick="closeModal('historyModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 id="historyModalTitle" style="font-size:1.05rem;font-weight:800;">Saved History</h3>
+            <p style="font-size:0.75rem;color:var(--muted-fg);">Tap any saved day to load it or re-export its PNG.</p>
+            <div id="historyListContainer" style="display:flex;flex-direction:column;gap:0.6rem;max-height:60vh;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRM MODAL (Requires typing YES) -->
+    <div id="deleteModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('deleteModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 style="font-size:1.05rem;font-weight:800;color:#ef4444;">Delete Class</h3>
+            <p id="deleteConfirmPrompt" style="font-size:0.82rem;color:var(--muted-fg);line-height:1.45;">
+                Are you sure you want to delete this class and all its saved history? Type <strong>YES</strong> below to confirm.
+            </p>
+            <input id="deleteYesInput" type="text" class="field-input" placeholder="Type YES to confirm" autocomplete="off" />
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button id="confirmDeleteClassBtn" class="btn-danger" disabled>Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT PREVIEW MODAL -->
+    <div id="exportPreviewModal" class="modal-backdrop hidden">
+        <div class="modal-card" style="max-width:28rem;">
+            <button class="modal-close" onclick="closeModal('exportPreviewModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 style="font-size:1rem;font-weight:800;">PNG Report Ready</h3>
+            <p style="font-size:0.74rem;color:var(--muted-fg);">Saved to class history. Download or share the PNG image below.</p>
+            <img id="exportedPreviewImg" alt="Exported Report" style="width:100%;border-radius:0.85rem;border:1px solid var(--bar-border);" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+                <button id="downloadPngBtn" class="btn-primary">Download PNG</button>
+                <button id="sharePngBtn" class="btn-secondary">Share Image</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-backdrop hidden">
+        <div class="modal-card" style="text-align:center;">
+            <button class="modal-close" onclick="closeModal('settingsModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+
+            <!-- Emblem / School Logo Preview -->
+            <img id="settingsLogoPreview" src="icon.png" alt="School Logo" style="width:6.5rem;height:6.5rem;margin:0 auto;border-radius:1.25rem;object-fit:contain;background:var(--input-bg);border:2px solid var(--bar-border);padding:0.25rem;" />
+
+            <div>
+                <h3 style="font-size:1rem;font-weight:800;">School & App Settings</h3>
+                <p style="font-size:0.72rem;color:var(--muted-fg);">All data stays offline on your device</p>
+            </div>
+
+            <!-- Import School Logo -->
+            <div class="field-group">
+                <label class="field-label">School Logo</label>
+                <div style="display:flex;gap:0.5rem;">
+                    <label class="btn-secondary" style="flex:1;cursor:pointer;">
+                        <svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span>Import School Logo</span>
+                        <input id="schoolLogoFileInput" type="file" accept="image/*" class="hidden" />
+                    </label>
+                    <button type="button" id="resetSchoolLogoBtn" class="btn-secondary" title="Reset to default icon">Reset</button>
+                </div>
+            </div>
+
+            <!-- School Name -->
+            <div class="field-group">
+                <label class="field-label" for="schoolNameInput">School Name</label>
+                <input id="schoolNameInput" type="text" class="field-input" placeholder="e.g. Canadian International School" />
+            </div>
+
+            <!-- School Motto (Optional) -->
+            <div class="field-group">
+                <label class="field-label" for="schoolMottoInput">School Motto (Optional)</label>
+                <input id="schoolMottoInput" type="text" class="field-input" placeholder="e.g. Knowledge & Character" />
+            </div>
+
+            <!-- Teacher's Name -->
+            <div class="field-group">
+                <label class="field-label" for="teacherNameInput">Teacher's Name (For the Export)</label>
+                <input id="teacherNameInput" type="text" class="field-input" placeholder="e.g. Mr. Robert" />
+            </div>
+
+            <!-- Theme Selector -->
+            <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
+                <span class="field-label">App Background Theme</span>
+                <div class="theme-grid">
+                    <button type="button" onclick="setAppTheme('black')" class="theme-pill" style="background:#09090b;color:#fff;">Pure Black</button>
+                    <button type="button" onclick="setAppTheme('dark')" class="theme-pill" style="background:#1e293b;color:#e2e8f0;">Dark</button>
+                    <button type="button" onclick="setAppTheme('light')" class="theme-pill" style="background:#e2e8f0;color:#0f172a;">Light</button>
+                </div>
+            </div>
+
+            <!-- Accent Color -->
+            <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
+                <span class="field-label">Accent Color</span>
+                <div class="swatch-row">
+                    <button type="button" aria-label="Green accent" onclick="setAccentColor('#10b981')" class="swatch" style="background:#10b981;"></button>
+                    <button type="button" aria-label="Red accent" onclick="setAccentColor('#ef4444')" class="swatch" style="background:#ef4444;"></button>
+                    <button type="button" aria-label="Blue accent" onclick="setAccentColor('#3b82f6')" class="swatch" style="background:#3b82f6;"></button>
+                    <button type="button" aria-label="Purple accent" onclick="setAccentColor('#a855f7')" class="swatch" style="background:#a855f7;"></button>
+                    <button type="button" aria-label="Amber accent" onclick="setAccentColor('#f59e0b')" class="swatch" style="background:#f59e0b;"></button>
+                </div>
+            </div>
+
+            <button type="button" id="saveSettingsBtn" class="btn-primary" style="width:100%;padding:0.75rem;">Save Settings</button>
+
+            <p class="footer-sig">Designed by REAPER-357</p>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================
+           OFFLINE STATE & STORAGE
+        ========================================================= */
+        const STORAGE_KEYS = {
+            SETTINGS: 'classroll_settings_v1',
+            CLASSES: 'classroll_classes_v1',
+            RECORDS: 'classroll_records_v1',
+            THEME: 'template_theme',
+            ACCENT: 'template_accent'
+        };
+
+        let settings = {
+            schoolName: '',
+            schoolMotto: '',
+            teacherName: '',
+            schoolLogoDataUrl: ''
+        };
+
+        let classes = [];
+        let records = {}; // key: `${classId}_${dateStr}` -> { classId, date, attendance: {name: 'present'|'absent'}, homework: {name: 'done'|'missing'}, homeworkTopic: '', exportedAt: '' }
+
+        let activeClassId = null;
+        let activeTab = 'attendance'; // 'attendance' | 'homework'
+        let editingClassId = null;
+        let draftRoster = [];
+        let pendingDeleteClassId = null;
+        let lastExportDataUrl = '';
+        let lastExportFilename = 'attendance.png';
+
+        /* =========================================================
+           UTILITIES
+        ========================================================= */
+        const toastEl = document.getElementById('toast');
+        let toastTimer = null;
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2600);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function getTodayISO() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatTime12h(time24) {
+            if (!time24) return '';
+            const [hStr, mStr] = time24.split(':');
+            let h = parseInt(hStr, 10);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${mStr} ${ampm}`;
+        }
+
+        function formatPrettyDate(isoDate) {
+            if (!isoDate) return '';
+            const [y, m, d] = isoDate.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            return dt.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function getDeviceTimestamp() {
+            const now = new Date();
+            return now.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function saveAllData() {
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+            localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(classes));
+            localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records));
+        }
+
+        function loadAllData() {
+            try {
+                const s = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS));
+                if (s) settings = { ...settings, ...s };
+            } catch (e) {}
+            try {
+                const c = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLASSES));
+                if (Array.isArray(c)) classes = c;
+            } catch (e) {}
+            try {
+                const r = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECORDS));
+                if (r && typeof r === 'object') records = r;
+            } catch (e) {}
+        }
+
+        /* =========================================================
+           THEME & ACCENT
+        ========================================================= */
+        function setAccentColor(hex) {
+            localStorage.setItem(STORAGE_KEYS.ACCENT, hex);
+            document.documentElement.style.setProperty('--accent-color', hex);
+            document.getElementById('appTitleHeader').style.color = hex;
+        }
+
+        function setAppTheme(theme) {
+            if (!['black', 'dark', 'light'].includes(theme)) theme = 'black';
+            localStorage.setItem(STORAGE_KEYS.THEME, theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.classList.toggle('dark', theme !== 'light');
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', { black: '#000000', dark: '#0f172a', light: '#f1f5f9' }[theme]);
+        }
+
+        /* =========================================================
+           SETTINGS & SCHOOL LOGO
+        ========================================================= */
+        function renderSchoolBranding() {
+            const logoSrc = settings.schoolLogoDataUrl || 'icon.png';
+            const smallSrc = settings.schoolLogoDataUrl || 'small-icon.png';
+            document.getElementById('mainSchoolLogo').src = logoSrc;
+            document.getElementById('settingsLogoPreview').src = logoSrc;
+            document.getElementById('headerLogoImg').src = smallSrc;
+
+            const nameEl = document.getElementById('mainSchoolName');
+            nameEl.textContent = settings.schoolName.trim() || 'Your School Name';
+
+            const mottoEl = document.getElementById('mainSchoolMotto');
+            if (settings.schoolMotto && settings.schoolMotto.trim()) {
+                mottoEl.textContent = `"${settings.schoolMotto.trim()}"`;
+                mottoEl.classList.remove('hidden');
+            } else {
+                mottoEl.classList.add('hidden');
+            }
+
+            const teacherEl = document.getElementById('mainTeacherDisplay');
+            teacherEl.textContent = settings.teacherName.trim()
+                ? `Teacher: ${settings.teacherName.trim()}`
+                : 'Teacher: Not set (tap gear icon to set)';
+        }
+
+        document.getElementById('openSettingsBtn').addEventListener('click', () => {
+            document.getElementById('schoolNameInput').value = settings.schoolName || '';
+            document.getElementById('schoolMottoInput').value = settings.schoolMotto || '';
+            document.getElementById('teacherNameInput').value = settings.teacherName || '';
+            document.getElementById('settingsLogoPreview').src = settings.schoolLogoDataUrl || 'icon.png';
+            openModal('settingsModal');
+        });
+
+        document.getElementById('schoolLogoFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                // Resize slightly to keep localStorage fast and compact
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 400;
+                    let w = img.width, h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                        else { w = Math.round(w * maxDim / h); h = maxDim; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    settings.schoolLogoDataUrl = canvas.toDataURL('image/png');
+                    document.getElementById('settingsLogoPreview').src = settings.schoolLogoDataUrl;
+                    showToast('Logo loaded');
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('resetSchoolLogoBtn').addEventListener('click', () => {
+            settings.schoolLogoDataUrl = '';
+            document.getElementById('settingsLogoPreview').src = 'icon.png';
+            document.getElementById('schoolLogoFileInput').value = '';
+            showToast('Logo reset to default');
+        });
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            settings.schoolName = document.getElementById('schoolNameInput').value.trim();
+            settings.schoolMotto = document.getElementById('schoolMottoInput').value.trim();
+            settings.teacherName = document.getElementById('teacherNameInput').value.trim();
+            saveAllData();
+            renderSchoolBranding();
+            closeModal('settingsModal');
+            showToast('Settings saved');
+        });
+
+        /* =========================================================
+           CLASSES LIST (HOME VIEW)
+        ========================================================= */
+        function renderClassList() {
+            const container = document.getElementById('classListContainer');
+            container.innerHTML = '';
+
+            if (classes.length === 0) {
+                container.innerHTML = `
+                    <div class="panel" style="text-align:center;padding:2rem 1rem;color:var(--muted-fg);font-size:0.82rem;">
+                        No classes created yet. Tap <strong>New Class</strong> to add your first class and paste your student list.
+                    </div>
+                `;
+                return;
+            }
+
+            classes.forEach(cls => {
+                const card = document.createElement('div');
+                card.className = 'class-card';
+
+                const mainArea = document.createElement('div');
+                mainArea.className = 'class-card-main';
+                mainArea.innerHTML = `
+                    <div class="class-name">${escapeHtml(cls.name)}</div>
+                    <div class="class-meta">
+                        <span>Start: ${formatTime12h(cls.startTime)}</span>
+                        <span>•</span>
+                        <span>${cls.students.length} Students</span>
+                    </div>
+                `;
+                mainArea.addEventListener('click', () => openClassScreen(cls.id, getTodayISO()));
+
+                const actions = document.createElement('div');
+                actions.className = 'class-actions';
+
+                // Pen & paper icon for Edit
+                const editBtn = document.createElement('button');
+                editBtn.className = 'tiny-action-btn';
+                editBtn.title = 'Edit Class';
+                editBtn.setAttribute('aria-label', 'Edit Class');
+                editBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+                editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditClassModal(cls.id); });
+
+                // Clock arrow back icon for History
+                const histBtn = document.createElement('button');
+                histBtn.className = 'tiny-action-btn';
+                histBtn.title = 'Class History';
+                histBtn.setAttribute('aria-label', 'Class History');
+                histBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>`;
+                histBtn.addEventListener('click', (e) => { e.stopPropagation(); openHistoryModal(cls.id); });
+
+                // Trash bin icon for Delete
+                const delBtn = document.createElement('button');
+                delBtn.className = 'tiny-action-btn del';
+                delBtn.title = 'Delete Class';
+                delBtn.setAttribute('aria-label', 'Delete Class');
+                delBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
+                delBtn.addEventListener('click', (e) => { e.stopPropagation(); openDeleteClassModal(cls.id); });
+
+                actions.appendChild(editBtn);
+                actions.appendChild(histBtn);
+                actions.appendChild(delBtn);
+
+                card.appendChild(mainArea);
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        /* =========================================================
+           ADD / EDIT CLASS & BULK PASTE STUDENTS
+        ========================================================= */
+        document.getElementById('openAddClassBtn').addEventListener('click', () => {
+            editingClassId = null;
+            draftRoster = [];
+            document.getElementById('classFormTitle').textContent = 'Create New Class';
+            document.getElementById('classNameInput').value = '';
+            document.getElementById('classStartTimeInput').value = '08:00';
+            document.getElementById('bulkStudentsTextarea').value = '';
+            renderDraftRoster();
+            openModal('classFormModal');
+        });
+
+        function openEditClassModal(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            editingClassId = classId;
+            draftRoster = [...cls.students];
+            document.getElementById('classFormTitle').textContent = 'Edit Class';
+            document.getElementById('classNameInput').value = cls.name;
+            document.getElementById('classStartTimeInput').value = cls.startTime || '08:00';
+            document.getElementById('bulkStudentsTextarea').value = '';
+            renderDraftRoster();
+            openModal('classFormModal');
+        }
+
+        document.getElementById('addBulkStudentsBtn').addEventListener('click', () => {
+            const raw = document.getElementById('bulkStudentsTextarea').value;
+            if (!raw.trim()) {
+                showToast('Paste or type names first');
+                return;
+            }
+            // Split by newlines or commas, strip leading numbering like "1. " or "1) "
+            const parsed = raw
+                .split(/[\r\n,]+/)
+                .map(line => line.replace(/^\s*\d+[\.\)\-:]\s*/, '').trim())
+                .filter(Boolean);
+
+            let addedCount = 0;
+            parsed.forEach(name => {
+                if (!draftRoster.some(existing => existing.toLowerCase() === name.toLowerCase())) {
+                    draftRoster.push(name);
+                    addedCount++;
+                }
+            });
+
+            document.getElementById('bulkStudentsTextarea').value = '';
+            renderDraftRoster();
+            showToast(`Added ${addedCount} student${addedCount === 1 ? '' : 's'}`);
+        });
+
+        document.getElementById('clearDraftRosterBtn').addEventListener('click', () => {
+            draftRoster = [];
+            renderDraftRoster();
+        });
+
+        function renderDraftRoster() {
+            document.getElementById('draftRosterCount').textContent = draftRoster.length;
+            const list = document.getElementById('draftRosterList');
+            list.innerHTML = '';
+            if (draftRoster.length === 0) {
+                list.innerHTML = `<div style="font-size:0.74rem;color:var(--subtle-fg);padding:0.4rem 0;">No students added yet.</div>`;
+                return;
+            }
+            draftRoster.forEach((name, idx) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--input-bg);border:1px solid var(--bar-border);border-radius:0.6rem;padding:0.35rem 0.6rem;font-size:0.8rem;';
+                row.innerHTML = `<span>${idx + 1}. ${escapeHtml(name)}</span>`;
+                const rm = document.createElement('button');
+                rm.type = 'button';
+                rm.style.cssText = 'color:#ef4444;font-weight:700;padding:0 0.3rem;';
+                rm.textContent = '×';
+                rm.addEventListener('click', () => {
+                    draftRoster.splice(idx, 1);
+                    renderDraftRoster();
+                });
+                row.appendChild(rm);
+                list.appendChild(row);
+            });
+        }
+
+        document.getElementById('saveClassBtn').addEventListener('click', () => {
+            const name = document.getElementById('classNameInput').value.trim();
+            const startTime = document.getElementById('classStartTimeInput').value || '08:00';
+
+            // If user left un-added text in textarea, automatically parse it too
+            const leftoverRaw = document.getElementById('bulkStudentsTextarea').value.trim();
+            if (leftoverRaw) {
+                leftoverRaw.split(/[\r\n,]+/)
+                    .map(line => line.replace(/^\s*\d+[\.\)\-:]\s*/, '').trim())
+                    .filter(Boolean)
+                    .forEach(n => {
+                        if (!draftRoster.some(e => e.toLowerCase() === n.toLowerCase())) draftRoster.push(n);
+                    });
+            }
+
+            if (!name) {
+                showToast('Please enter a class name');
+                return;
+            }
+            if (draftRoster.length === 0) {
+                showToast('Add at least one student');
+                return;
+            }
+
+            if (editingClassId) {
+                const cls = classes.find(c => c.id === editingClassId);
+                if (cls) {
+                    cls.name = name;
+                    cls.startTime = startTime;
+                    cls.students = [...draftRoster];
+                }
+                showToast('Class updated');
+            } else {
+                classes.push({
+                    id: 'cls_' + Date.now(),
+                    name,
+                    startTime,
+                    students: [...draftRoster]
+                });
+                showToast('Class created');
+            }
+
+            saveAllData();
+            renderClassList();
+            closeModal('classFormModal');
+        });
+
+        /* =========================================================
+           DELETE CLASS (REQUIRES TYPING YES)
+        ========================================================= */
+        function openDeleteClassModal(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            pendingDeleteClassId = classId;
+            document.getElementById('deleteConfirmPrompt').innerHTML =
+                `Delete <strong>${escapeHtml(cls.name)}</strong> and all its saved records? Type <strong>YES</strong> below to confirm.`;
+            const inp = document.getElementById('deleteYesInput');
+            const btn = document.getElementById('confirmDeleteClassBtn');
+            inp.value = '';
+            btn.disabled = true;
+            openModal('deleteModal');
+        }
+
+        document.getElementById('deleteYesInput').addEventListener('input', (e) => {
+            document.getElementById('confirmDeleteClassBtn').disabled = (e.target.value.trim() !== 'YES');
+        });
+
+        document.getElementById('confirmDeleteClassBtn').addEventListener('click', () => {
+            if (document.getElementById('deleteYesInput').value.trim() !== 'YES' || !pendingDeleteClassId) return;
+            classes = classes.filter(c => c.id !== pendingDeleteClassId);
+            Object.keys(records).forEach(k => {
+                if (k.startsWith(pendingDeleteClassId + '_')) delete records[k];
+            });
+            saveAllData();
+            renderClassList();
+            closeModal('deleteModal');
+            showToast('Class deleted');
+        });
+
+        /* =========================================================
+           HISTORY MODAL
+        ========================================================= */
+        function openHistoryModal(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            document.getElementById('historyModalTitle').textContent = `${cls.name} — History`;
+            const container = document.getElementById('historyListContainer');
+            container.innerHTML = '';
+
+            const classRecords = Object.values(records)
+                .filter(r => r.classId === classId)
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            if (classRecords.length === 0) {
+                container.innerHTML = `<div style="font-size:0.8rem;color:var(--muted-fg);text-align:center;padding:1.5rem 0;">No saved days yet. Open the class and tap Export to save a day.</div>`;
+                openModal('historyModal');
+                return;
+            }
+
+            classRecords.forEach(rec => {
+                const presentCount = cls.students.filter(s => rec.attendance?.[s] === 'present').length;
+                const absentCount = cls.students.filter(s => rec.attendance?.[s] === 'absent').length;
+                const hwDoneCount = cls.students.filter(s => rec.homework?.[s] === 'done').length;
+
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="font-size:0.85rem;">${formatPrettyDate(rec.date)}</strong>
+                        <span style="font-size:0.68rem;color:var(--subtle-fg);">${rec.exportedAt ? 'Exported ' + escapeHtml(rec.exportedAt) : 'Saved'}</span>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--muted-fg);">
+                        In Class: <strong>${presentCount}</strong> • Absent: <strong>${absentCount}</strong> • Homework Done: <strong>${hwDoneCount}/${cls.students.length}</strong>
+                    </div>
+                `;
+                const openBtn = document.createElement('button');
+                openBtn.className = 'btn-secondary';
+                openBtn.style.marginTop = '0.25rem';
+                openBtn.textContent = 'Open / Re-Export Day';
+                openBtn.addEventListener('click', () => {
+                    closeModal('historyModal');
+                    openClassScreen(classId, rec.date);
+                });
+                item.appendChild(openBtn);
+                container.appendChild(item);
+            });
+
+            openModal('historyModal');
+        }
+
+        /* =========================================================
+           CLASS ATTENDANCE & HOMEWORK SCREEN
+        ========================================================= */
+        function getOrCreateRecord(classId, dateStr) {
+            const key = `${classId}_${dateStr}`;
+            const cls = classes.find(c => c.id === classId);
+            if (!records[key]) {
+                const att = {};
+                const hw = {};
+                cls.students.forEach(s => {
+                    att[s] = 'present';
+                    hw[s] = 'done';
+                });
+                records[key] = {
+                    classId,
+                    date: dateStr,
+                    attendance: att,
+                    homework: hw,
+                    homeworkTopic: '',
+                    exportedAt: ''
+                };
+            } else {
+                // Ensure newly added students get default entries
+                cls.students.forEach(s => {
+                    if (!records[key].attendance[s]) records[key].attendance[s] = 'present';
+                    if (!records[key].homework) records[key].homework = {};
+                    if (!records[key].homework[s]) records[key].homework[s] = 'done';
+                });
+            }
+            return records[key];
+        }
+
+        function openClassScreen(classId, dateStr) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            activeClassId = classId;
+            document.getElementById('sessionDateInput').value = dateStr || getTodayISO();
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('classView').classList.remove('hidden');
+            document.getElementById('homeBtn').classList.remove('hidden');
+
+            switchClassTab('attendance');
+        }
+
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            activeClassId = null;
+            document.getElementById('classView').classList.add('hidden');
+            document.getElementById('homeBtn').classList.add('hidden');
+            document.getElementById('homeView').classList.remove('hidden');
+            renderClassList();
+        });
+
+        document.getElementById('sessionDateInput').addEventListener('change', () => {
+            renderActiveClassRoll();
+        });
+
+        document.getElementById('homeworkTopicInput').addEventListener('input', (e) => {
+            if (!activeClassId) return;
+            const dateStr = document.getElementById('sessionDateInput').value;
+            const rec = getOrCreateRecord(activeClassId, dateStr);
+            rec.homeworkTopic = e.target.value;
+            saveAllData();
+        });
+
+        function switchClassTab(tab) {
+            activeTab = tab;
+            document.getElementById('tabAttendance').classList.toggle('active', tab === 'attendance');
+            document.getElementById('tabHomework').classList.toggle('active', tab === 'homework');
+            document.getElementById('homeworkTopicBox').classList.toggle('hidden', tab !== 'homework');
+            document.getElementById('markAllPositiveBtn').textContent = tab === 'attendance' ? 'All Present' : 'All Done';
+            document.getElementById('exportPngBtn').querySelector('span').textContent =
+                tab === 'attendance' ? 'Export Attendance PNG' : 'Export Homework PNG';
+            renderActiveClassRoll();
+        }
+
+        document.getElementById('markAllPositiveBtn').addEventListener('click', () => {
+            if (!activeClassId) return;
+            const cls = classes.find(c => c.id === activeClassId);
+            const dateStr = document.getElementById('sessionDateInput').value;
+            const rec = getOrCreateRecord(activeClassId, dateStr);
+            cls.students.forEach(s => {
+                if (activeTab === 'attendance') rec.attendance[s] = 'present';
+                else rec.homework[s] = 'done';
+            });
+            saveAllData();
+            renderActiveClassRoll();
+        });
+
+        function renderActiveClassRoll() {
+            const cls = classes.find(c => c.id === activeClassId);
+            if (!cls) return;
+            const dateStr = document.getElementById('sessionDateInput').value || getTodayISO();
+            const rec = getOrCreateRecord(activeClassId, dateStr);
+
+            document.getElementById('activeClassTitle').textContent = cls.name;
+            document.getElementById('activeClassMeta').textContent =
+                `Start Time: ${formatTime12h(cls.startTime)} • ${formatPrettyDate(dateStr)}`;
+            document.getElementById('homeworkTopicInput').value = rec.homeworkTopic || '';
+
+            const listEl = document.getElementById('studentRollList');
+            listEl.innerHTML = '';
+
+            let countPos = 0;
+            let countNeg = 0;
+
+            cls.students.forEach((studentName, idx) => {
+                const row = document.createElement('div');
+                row.className = 'student-row';
+
+                const label = document.createElement('div');
+                label.className = 'student-name';
+                label.textContent = `${idx + 1}. ${studentName}`;
+
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'status-btn-group';
+
+                if (activeTab === 'attendance') {
+                    const status = rec.attendance[studentName] || 'present';
+                    if (status === 'present') countPos++; else countNeg++;
+
+                    const presBtn = document.createElement('button');
+                    presBtn.className = `status-btn present ${status === 'present' ? 'active' : ''}`;
+                    presBtn.textContent = 'Present';
+                    presBtn.addEventListener('click', () => {
+                        rec.attendance[studentName] = 'present';
+                        saveAllData();
+                        renderActiveClassRoll();
+                    });
+
+                    const absBtn = document.createElement('button');
+                    absBtn.className = `status-btn absent ${status === 'absent' ? 'active' : ''}`;
+                    absBtn.textContent = 'Absent';
+                    absBtn.addEventListener('click', () => {
+                        rec.attendance[studentName] = 'absent';
+                        saveAllData();
+                        renderActiveClassRoll();
+                    });
+
+                    btnGroup.appendChild(presBtn);
+                    btnGroup.appendChild(absBtn);
+                } else {
+                    const hwStatus = rec.homework[studentName] || 'done';
+                    if (hwStatus === 'done') countPos++; else countNeg++;
+
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = `status-btn hw-done ${hwStatus === 'done' ? 'active' : ''}`;
+                    doneBtn.textContent = 'Done';
+                    doneBtn.addEventListener('click', () => {
+                        rec.homework[studentName] = 'done';
+                        saveAllData();
+                        renderActiveClassRoll();
+                    });
+
+                    const missBtn = document.createElement('button');
+                    missBtn.className = `status-btn hw-missing ${hwStatus === 'missing' ? 'active' : ''}`;
+                    missBtn.textContent = 'Missing';
+                    missBtn.addEventListener('click', () => {
+                        rec.homework[studentName] = 'missing';
+                        saveAllData();
+                        renderActiveClassRoll();
+                    });
+
+                    btnGroup.appendChild(doneBtn);
+                    btnGroup.appendChild(missBtn);
+                }
+
+                row.appendChild(label);
+                row.appendChild(btnGroup);
+                listEl.appendChild(row);
+            });
+
+            document.getElementById('liveCountText').textContent = activeTab === 'attendance'
+                ? `In Class: ${countPos} • Absent: ${countNeg}`
+                : `Done: ${countPos} • Missing: ${countNeg}`;
+        }
+
+        /* =========================================================
+           PNG REPORT GENERATOR (CANVAS) & SAVE DAY
+        ========================================================= */
+        function loadImageSafe(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
+        }
+
+        function wrapTextLines(ctx, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let current = '';
+            for (const word of words) {
+                const test = current ? current + ' ' + word : word;
+                if (ctx.measureText(test).width > maxWidth && current) {
+                    lines.push(current);
+                    current = word;
+                } else {
+                    current = test;
+                }
+            }
+            if (current) lines.push(current);
+            return lines;
+        }
+
+        document.getElementById('exportPngBtn').addEventListener('click', async () => {
+            if (!activeClassId) return;
+            const cls = classes.find(c => c.id === activeClassId);
+            const dateStr = document.getElementById('sessionDateInput').value || getTodayISO();
+            const rec = getOrCreateRecord(activeClassId, dateStr);
+
+            const exportTimestamp = getDeviceTimestamp();
+            rec.exportedAt = exportTimestamp;
+            saveAllData();
+
+            const isAttendance = (activeTab === 'attendance');
+            const groupALabel = isAttendance ? 'In Class:' : 'Homework Completed:';
+            const groupBLabel = isAttendance ? 'Absent:' : 'Homework Missing:';
+
+            const groupANames = cls.students.filter(s =>
+                isAttendance ? (rec.attendance[s] === 'present') : (rec.homework[s] === 'done')
+            );
+            const groupBNames = cls.students.filter(s =>
+                isAttendance ? (rec.attendance[s] === 'absent') : (rec.homework[s] === 'missing')
+            );
+
+            const schoolName = settings.schoolName.trim() || 'School Report';
+            const schoolMotto = settings.schoolMotto.trim();
+            const teacherName = settings.teacherName.trim() || 'Teacher';
+
+            const logoImg = await loadImageSafe(settings.schoolLogoDataUrl || 'icon.png');
+
+            // Prepare high-DPI canvas
+            const width = 900;
+            const pad = 54;
+            const contentW = width - pad * 2;
+
+            // Measure height dynamically
+            const measureCanvas = document.createElement('canvas');
+            const mCtx = measureCanvas.getContext('2d');
+
+            mCtx.font = '600 24px system-ui, -apple-system, sans-serif';
+            const groupAText = groupANames.length ? groupANames.join(', ') : 'None';
+            const groupBText = groupBNames.length ? groupBNames.join(', ') : 'None';
+            const groupALines = wrapTextLines(mCtx, groupAText, contentW - 36);
+            const groupBLines = wrapTextLines(mCtx, groupBText, contentW - 36);
+
+            const footerLine1 = `${isAttendance ? 'Attendance' : 'Homework'} done by Teacher ${teacherName}`;
+            const footerLine2 = `It is accurate as of ${exportTimestamp}`;
+
+            let totalH = 60; // top pad
+            totalH += 96; // header logo + school name + motto
+            totalH += 36; // divider
+            totalH += 110; // Date, Class Name, Class Start Time (+ optional HW topic)
+            if (!isAttendance && rec.homeworkTopic) totalH += 34;
+            totalH += 32; // spacing
+            totalH += 56 + groupALines.length * 34 + 28; // Group A card
+            totalH += 24; // gap
+            totalH += 56 + groupBLines.length * 34 + 28; // Group B card
+            totalH += 44; // divider
+            totalH += 88; // footer
+            totalH += 40; // bottom pad
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = totalH;
+            const ctx = canvas.getContext('2d');
+
+            // Clean crisp white background for easy printing & sharing on Messenger/Telegram
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, totalH);
+
+            // Outer subtle border
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(16, 16, width - 32, totalH - 32);
+
+            let y = 56;
+
+            // Top: Small school logo + School name + Motto underneath
+            const logoSize = 84;
+            let textStartX = pad;
+            if (logoImg) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(pad, y, logoSize, logoSize, 16);
+                ctx.clip();
+                ctx.drawImage(logoImg, pad, y, logoSize, logoSize);
+                ctx.restore();
+                textStartX = pad + logoSize + 22;
+            }
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 32px system-ui, -apple-system, sans-serif';
+            ctx.fillText(schoolName, textStartX, y + (schoolMotto ? 38 : 52));
+
+            if (schoolMotto) {
+                ctx.fillStyle = '#475569';
+                ctx.font = 'italic 500 21px system-ui, -apple-system, sans-serif';
+                ctx.fillText(schoolMotto, textStartX, y + 70);
+            }
+
+            y += logoSize + 24;
+
+            // Divider
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pad, y);
+            ctx.lineTo(width - pad, y);
+            ctx.stroke();
+
+            y += 38;
+
+            // Date, Class Name, Class Start Time
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '700 24px system-ui, -apple-system, sans-serif';
+            ctx.fillText(`Date: ${formatPrettyDate(dateStr)}`, pad, y);
+            y += 36;
+            ctx.fillText(`Class: ${cls.name}`, pad, y);
+            y += 36;
+            ctx.fillText(`Class Start Time: ${formatTime12h(cls.startTime)}`, pad, y);
+
+            if (!isAttendance && rec.homeworkTopic) {
+                y += 36;
+                ctx.fillStyle = '#334155';
+                ctx.font = '600 22px system-ui, -apple-system, sans-serif';
+                ctx.fillText(`Assignment: ${rec.homeworkTopic}`, pad, y);
+            }
+
+            y += 34;
+
+            // Box A: In Class (or Homework Completed)
+            const boxAH = 52 + groupALines.length * 34 + 22;
+            ctx.fillStyle = '#f0fdf4';
+            ctx.strokeStyle = '#86efac';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(pad, y, contentW, boxAH, 16);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#166534';
+            ctx.font = '800 24px system-ui, -apple-system, sans-serif';
+            ctx.fillText(`${groupALabel} (${groupANames.length})`, pad + 20, y + 36);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '500 23px system-ui, -apple-system, sans-serif';
+            groupALines.forEach((line, i) => {
+                ctx.fillText(line, pad + 20, y + 72 + i * 34);
+            });
+
+            y += boxAH + 22;
+
+            // Box B: Absent (or Homework Missing)
+            const boxBH = 52 + groupBLines.length * 34 + 22;
+            ctx.fillStyle = isAttendance ? '#fef2f2' : '#fffbeb';
+            ctx.strokeStyle = isAttendance ? '#fca5a5' : '#fcd34d';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(pad, y, contentW, boxBH, 16);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = isAttendance ? '#991b1b' : '#92400e';
+            ctx.font = '800 24px system-ui, -apple-system, sans-serif';
+            ctx.fillText(`${groupBLabel} (${groupBNames.length})`, pad + 20, y + 36);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '500 23px system-ui, -apple-system, sans-serif';
+            groupBLines.forEach((line, i) => {
+                ctx.fillText(line, pad + 20, y + 72 + i * 34);
+            });
+
+            y += boxBH + 34;
+
+            // Footer Divider
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pad, y);
+            ctx.lineTo(width - pad, y);
+            ctx.stroke();
+
+            y += 36;
+
+            // Bottom Footer Text
+            ctx.fillStyle = '#1e293b';
+            ctx.font = '700 22px system-ui, -apple-system, sans-serif';
+            ctx.fillText(footerLine1, pad, y);
+            y += 32;
+            ctx.fillStyle = '#475569';
+            ctx.font = '500 20px system-ui, -apple-system, sans-serif';
+            ctx.fillText(footerLine2, pad, y);
+
+            lastExportDataUrl = canvas.toDataURL('image/png');
+            const safeClass = cls.name.replace(/[^a-z0-9]+/gi, '_');
+            lastExportFilename = `${safeClass}_${activeTab}_${dateStr}.png`;
+
+            document.getElementById('exportedPreviewImg').src = lastExportDataUrl;
+            openModal('exportPreviewModal');
+            showToast('Day saved & PNG created');
+        });
+
+        document.getElementById('downloadPngBtn').addEventListener('click', () => {
+            if (!lastExportDataUrl) return;
+            const a = document.createElement('a');
+            a.href = lastExportDataUrl;
+            a.download = lastExportFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        document.getElementById('sharePngBtn').addEventListener('click', async () => {
+            if (!lastExportDataUrl) return;
+            try {
+                const res = await fetch(lastExportDataUrl);
+                const blob = await res.blob();
+                const file = new File([blob], lastExportFilename, { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: lastExportFilename
+                    });
+                } else {
+                    showToast('Use Download PNG on this device');
+                }
+            } catch (err) {
+                showToast('Share cancelled');
+            }
+        });
+
+        /* =========================================================
+           INITIALIZATION & SERVICE WORKER
+        ========================================================= */
+        window.addEventListener('DOMContentLoaded', () => {
+            setAccentColor(localStorage.getItem(STORAGE_KEYS.ACCENT) || '#10b981');
+            setAppTheme(localStorage.getItem(STORAGE_KEYS.THEME) || 'black');
+            loadAllData();
+            renderSchoolBranding();
+            renderClassList();
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').then((registration) => {
+                    // Force an immediate update check when page loads
+                    registration.update();
+
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New service worker available.');
+                            }
+                        });
+                    });
+                }).catch((error) => {
+                    console.error('SW registration failed:', error);
+                });
+            }
+        });
+
+        // Reload page automatically when the new service worker takes control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
