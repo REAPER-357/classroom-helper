@@ -634,6 +634,15 @@
                 <input id="teacherNameInput" type="text" class="field-input" placeholder="e.g. Mr. Robert" />
             </div>
 
+            <!-- Export Name Format -->
+            <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
+                <span class="field-label">Export Report Name Layout</span>
+                <div class="mode-tabs">
+                    <button type="button" id="fmtListBtn" class="mode-tab active" onclick="setExportFormat('list')">Vertical List (1 per line)</button>
+                    <button type="button" id="fmtCommaBtn" class="mode-tab" onclick="setExportFormat('comma')">Comma Separated</button>
+                </div>
+            </div>
+
             <!-- Theme Selector -->
             <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
                 <span class="field-label">App Background Theme</span>
@@ -678,7 +687,8 @@
             schoolName: '',
             schoolMotto: '',
             teacherName: '',
-            schoolLogoDataUrl: ''
+            schoolLogoDataUrl: '',
+            exportFormat: 'list'
         };
 
         let classes = [];
@@ -809,11 +819,18 @@
                 : 'Teacher: Not set (tap gear icon to set)';
         }
 
+        function setExportFormat(fmt) {
+            settings.exportFormat = (fmt === 'comma') ? 'comma' : 'list';
+            document.getElementById('fmtListBtn').classList.toggle('active', settings.exportFormat === 'list');
+            document.getElementById('fmtCommaBtn').classList.toggle('active', settings.exportFormat === 'comma');
+        }
+
         document.getElementById('openSettingsBtn').addEventListener('click', () => {
             document.getElementById('schoolNameInput').value = settings.schoolName || '';
             document.getElementById('schoolMottoInput').value = settings.schoolMotto || '';
             document.getElementById('teacherNameInput').value = settings.teacherName || '';
             document.getElementById('settingsLogoPreview').src = settings.schoolLogoDataUrl || 'icon.png';
+            setExportFormat(settings.exportFormat || 'list');
             openModal('settingsModal');
         });
 
@@ -1388,11 +1405,22 @@
             const measureCanvas = document.createElement('canvas');
             const mCtx = measureCanvas.getContext('2d');
 
-            mCtx.font = '600 24px system-ui, -apple-system, sans-serif';
-            const groupAText = groupANames.length ? groupANames.join(', ') : 'None';
-            const groupBText = groupBNames.length ? groupBNames.join(', ') : 'None';
-            const groupALines = wrapTextLines(mCtx, groupAText, contentW - 36);
-            const groupBLines = wrapTextLines(mCtx, groupBText, contentW - 36);
+            mCtx.font = '500 23px system-ui, -apple-system, sans-serif';
+            const isListLayout = (settings.exportFormat || 'list') === 'list';
+            function buildGroupLines(namesArr) {
+                if (!namesArr.length) return ['None'];
+                if (isListLayout) {
+                    const out = [];
+                    namesArr.forEach((n, idx) => {
+                        const wrapped = wrapTextLines(mCtx, `${idx + 1}. ${n}`, contentW - 40);
+                        out.push(...wrapped);
+                    });
+                    return out;
+                }
+                return wrapTextLines(mCtx, namesArr.join(', '), contentW - 40);
+            }
+            const groupALines = buildGroupLines(groupANames);
+            const groupBLines = buildGroupLines(groupBNames);
 
             const footerLine1 = `${isAttendance ? 'Attendance' : 'Homework'} done by Teacher ${teacherName}`;
             const footerLine2 = `It is accurate as of ${exportTimestamp}`;
