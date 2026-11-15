@@ -127,17 +127,54 @@
             gap: 0.5rem;
             padding: 1.25rem 1rem;
         }
-        .school-hero-logo {
+
+        /* School logo: adjustable shape (round / square / rectangle) */
+        .school-logo {
+            display: block;
+            margin: 0 auto;
+            background-color: var(--input-bg);
+            border: 2px solid var(--bar-border);
+        }
+        .school-logo[data-shape="rect"] {
             max-width: 100%;
             max-height: 7.5rem;
             width: auto;
             height: auto;
             border-radius: 1rem;
             object-fit: contain;
-            background-color: var(--input-bg);
-            border: 2px solid var(--bar-border);
             padding: 0.3rem;
         }
+        .school-logo[data-shape="round"] {
+            width: 7.5rem;
+            height: 7.5rem;
+            border-radius: 9999px;
+            object-fit: cover;
+            padding: 0;
+        }
+        .school-logo[data-shape="square"] {
+            width: 7.5rem;
+            height: 7.5rem;
+            border-radius: 1rem;
+            object-fit: cover;
+            padding: 0;
+        }
+
+        .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+        .shape-pill {
+            padding: 0.5rem 0.3rem;
+            border-radius: 0.7rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid var(--bar-border);
+            background-color: var(--input-bg);
+            color: var(--muted-fg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .shape-pill.active { border-color: var(--accent-color); color: var(--accent-color); }
+
         .school-hero-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
         .school-hero-motto { font-size: 0.8rem; font-style: italic; color: var(--muted-fg); }
         .school-hero-teacher { font-size: 0.72rem; color: var(--subtle-fg); margin-top: 0.15rem; }
@@ -271,30 +308,15 @@
             background-color: var(--panel-bg);
             transition: all 0.12s;
         }
-        .status-btn.present.active {
-            background-color: #10b981;
-            border-color: #10b981;
-            color: #ffffff;
-        }
-        .status-btn.absent.active {
-            background-color: #ef4444;
-            border-color: #ef4444;
-            color: #ffffff;
-        }
-        .status-btn.hw-done.active {
-            background-color: #10b981;
-            border-color: #10b981;
-            color: #ffffff;
-        }
-        .status-btn.hw-missing.active {
-            background-color: #f59e0b;
-            border-color: #f59e0b;
-            color: #ffffff;
-        }
+        .status-btn.present.active { background-color: #10b981; border-color: #10b981; color: #ffffff; }
+        .status-btn.absent.active { background-color: #ef4444; border-color: #ef4444; color: #ffffff; }
+        .status-btn.hw-done.active { background-color: #10b981; border-color: #10b981; color: #ffffff; }
+        .status-btn.hw-missing.active { background-color: #f59e0b; border-color: #f59e0b; color: #ffffff; }
 
         /* Form inputs */
         .field-group { display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
         .field-label { font-size: 0.75rem; font-weight: 700; color: var(--muted-fg); }
+        .field-hint { font-size: 0.7rem; color: var(--subtle-fg); line-height: 1.35; }
         .field-input, .field-textarea {
             width: 100%;
             background-color: var(--input-bg);
@@ -400,6 +422,21 @@
             gap: 0.35rem;
         }
 
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.7rem;
+            border-radius: 0.8rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+        }
+        .check-row input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent-color); flex-shrink: 0; }
+
         footer { padding: 1.25rem 0; text-align: center; }
         .footer-sig { font-size: 0.65rem; font-family: var(--font-mono); letter-spacing: 0.14em; color: var(--subtle-fg); text-transform: uppercase; }
 
@@ -433,15 +470,13 @@
 
     <!-- MAIN HOME VIEW (TITLE SCREEN) -->
     <main id="homeView">
-        <!-- Middle Large School Logo & Info -->
         <section class="panel school-hero">
-            <img id="mainSchoolLogo" src="icon.png" alt="School Logo" class="school-hero-logo" />
+            <img id="mainSchoolLogo" class="school-logo" data-shape="rect" src="icon.png" alt="School Logo" />
             <div id="mainSchoolName" class="school-hero-name">Your School Name</div>
             <div id="mainSchoolMotto" class="school-hero-motto hidden"></div>
             <div id="mainTeacherDisplay" class="school-hero-teacher">Teacher: Not set (configure in Settings)</div>
         </section>
 
-        <!-- Classes Header + Add Class Button -->
         <div class="section-header">
             <h2 class="section-title">My Classes</h2>
             <button id="openAddClassBtn" class="btn-primary">
@@ -450,7 +485,17 @@
             </button>
         </div>
 
-        <!-- Classes List -->
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+            <label class="field-label" for="classSortSelect" style="white-space:nowrap;">Sort classes</label>
+            <select id="classSortSelect" class="field-input" style="flex:1;padding:0.45rem 0.7rem;font-size:0.8rem;">
+                <option value="added">Order added</option>
+                <option value="name-asc">Name A–Z</option>
+                <option value="name-desc">Name Z–A</option>
+                <option value="time-asc">Start time: earliest first</option>
+                <option value="time-desc">Start time: latest first</option>
+            </select>
+        </div>
+
         <div id="classListContainer" style="display:flex;flex-direction:column;gap:0.65rem;"></div>
     </main>
 
@@ -465,19 +510,16 @@
                 <input type="date" id="sessionDateInput" class="field-input" style="width:auto;padding:0.4rem 0.6rem;font-size:0.78rem;" />
             </div>
 
-            <!-- Mode Switcher: Attendance vs Homework -->
             <div class="mode-tabs">
                 <button id="tabAttendance" class="mode-tab active" onclick="switchClassTab('attendance')">Attendance</button>
                 <button id="tabHomework" class="mode-tab" onclick="switchClassTab('homework')">Homework</button>
             </div>
 
-            <!-- Homework Topic Input (Visible only on Homework tab) -->
             <div id="homeworkTopicBox" class="field-group hidden">
                 <label class="field-label" for="homeworkTopicInput">Homework Title / Assignment (Optional)</label>
                 <input id="homeworkTopicInput" type="text" class="field-input" placeholder="e.g. Workbook Page 14-15" />
             </div>
 
-            <!-- Quick Mark All + Live Counts -->
             <div class="summary-bar">
                 <span id="liveCountText">Present: 0 • Absent: 0</span>
                 <div style="display:flex;gap:0.4rem;">
@@ -485,20 +527,30 @@
                 </div>
             </div>
 
-            <!-- Student List -->
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+                <label class="field-label" for="studentSortSelect" style="white-space:nowrap;">Sort names</label>
+                <select id="studentSortSelect" class="field-input" style="flex:1;padding:0.45rem 0.7rem;font-size:0.8rem;">
+                    <option value="custom">Custom order</option>
+                    <option value="az">Name A–Z</option>
+                    <option value="za">Name Z–A</option>
+                </select>
+            </div>
+
             <div id="studentRollList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
 
-            <!-- Bottom Export Button -->
             <div style="padding-top:0.4rem;display:flex;flex-direction:column;gap:0.5rem;">
                 <button id="exportPngBtn" class="btn-primary" style="width:100%;padding:0.85rem;font-size:0.9rem;">
                     <svg class="ico ico-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     <span>Export PNG Report</span>
                 </button>
+                <button id="syncSheetBtn" class="btn-secondary hidden" style="width:100%;padding:0.75rem;">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                    <span>Sync to Google Sheet</span>
+                </button>
             </div>
         </section>
     </main>
 
-    <!-- FOOTER SIGNATURE -->
     <footer>
         <p class="footer-sig">Made by REAPER-357</p>
     </footer>
@@ -522,6 +574,12 @@
             </div>
 
             <div class="field-group">
+                <label class="field-label" for="classWebhookInput">Google Sheet Webhook URL (Optional)</label>
+                <input id="classWebhookInput" type="text" class="field-input" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:0.75rem;" autocomplete="off" autocapitalize="off" spellcheck="false" />
+                <span class="field-hint">Each class has its own Google Sheet. Leave empty if you do not want to sync this class.</span>
+            </div>
+
+            <div class="field-group">
                 <label class="field-label" for="bulkStudentsTextarea">Paste Student Names (One per line or comma-separated)</label>
                 <textarea id="bulkStudentsTextarea" rows="5" class="field-textarea" placeholder="Sovann&#10;Dara&#10;Bopha&#10;Sokha"></textarea>
                 <div style="display:flex;justify-content:flex-end;margin-top:0.25rem;">
@@ -535,9 +593,14 @@
             <div class="field-group">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span class="field-label">Current Roster (<span id="draftRosterCount">0</span>)</span>
-                    <button type="button" id="clearDraftRosterBtn" style="font-size:0.7rem;color:#ef4444;font-weight:600;">Clear All</button>
+                    <div style="display:flex;align-items:center;gap:0.7rem;">
+                        <button type="button" id="sortDraftAzBtn" style="font-size:0.7rem;color:var(--accent-color);font-weight:700;">A–Z</button>
+                        <button type="button" id="sortDraftZaBtn" style="font-size:0.7rem;color:var(--accent-color);font-weight:700;">Z–A</button>
+                        <button type="button" id="clearDraftRosterBtn" style="font-size:0.7rem;color:#ef4444;font-weight:600;">Clear All</button>
+                    </div>
                 </div>
                 <div id="draftRosterList" style="max-height:11rem;overflow-y:auto;display:flex;flex-direction:column;gap:0.35rem;padding-top:0.2rem;"></div>
+                <span class="field-hint">Use the arrows to set your custom order. A–Z / Z–A above re-order this list once. In the class screen, "Sort names" picks which order is shown.</span>
             </div>
 
             <button type="button" id="saveClassBtn" class="btn-primary" style="width:100%;padding:0.75rem;">Save Class</button>
@@ -597,8 +660,7 @@
                 <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
 
-            <!-- Emblem / School Logo Preview -->
-            <img id="settingsLogoPreview" src="icon.png" alt="School Logo" style="max-width:100%;max-height:7.5rem;width:auto;height:auto;margin:0 auto;border-radius:1rem;object-fit:contain;background:var(--input-bg);border:2px solid var(--bar-border);padding:0.3rem;" />
+            <img id="settingsLogoPreview" class="school-logo" data-shape="rect" src="icon.png" alt="School Logo" />
 
             <div>
                 <h3 style="font-size:1rem;font-weight:800;">School & App Settings</h3>
@@ -618,34 +680,76 @@
                 </div>
             </div>
 
-            <!-- School Name -->
+            <!-- Logo Shape -->
+            <div class="field-group">
+                <label class="field-label">Logo Shape</label>
+                <div class="shape-grid">
+                    <button type="button" class="shape-pill" data-shape-pick="round" onclick="setDraftShape('round')">
+                        <svg class="ico ico-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+                        <span>Round</span>
+                    </button>
+                    <button type="button" class="shape-pill" data-shape-pick="square" onclick="setDraftShape('square')">
+                        <svg class="ico ico-lg" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+                        <span>Square</span>
+                    </button>
+                    <button type="button" class="shape-pill" data-shape-pick="rect" onclick="setDraftShape('rect')">
+                        <svg class="ico ico-lg" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+                        <span>Rectangle</span>
+                    </button>
+                </div>
+                <span class="field-hint">Applies to the home screen, this preview and the PNG report. Round and Square crop to fit; Rectangle keeps the image as it is.</span>
+            </div>
+
             <div class="field-group">
                 <label class="field-label" for="schoolNameInput">School Name</label>
                 <input id="schoolNameInput" type="text" class="field-input" placeholder="e.g. Canadian International School" />
             </div>
 
-            <!-- School Motto (Optional) -->
             <div class="field-group">
                 <label class="field-label" for="schoolMottoInput">School Motto (Optional)</label>
                 <input id="schoolMottoInput" type="text" class="field-input" placeholder="e.g. Knowledge & Character" />
             </div>
 
-            <!-- Teacher's Name -->
             <div class="field-group">
                 <label class="field-label" for="teacherNameInput">Teacher's Name (For the Export)</label>
                 <input id="teacherNameInput" type="text" class="field-input" placeholder="e.g. Mr. Robert" />
             </div>
 
-            <!-- Export Name Format -->
-            <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
-                <span class="field-label">Export Report Name Layout</span>
-                <div class="mode-tabs">
-                    <button type="button" id="fmtListBtn" class="mode-tab active" onclick="setExportFormat('list')">Vertical List (1 per line)</button>
-                    <button type="button" id="fmtCommaBtn" class="mode-tab" onclick="setExportFormat('comma')">Comma Separated</button>
+            <!-- Names layout in PNG report -->
+            <div class="field-group">
+                <label class="field-label">Names in PNG Report</label>
+                <div class="shape-grid" style="grid-template-columns:repeat(2, 1fr);">
+                    <button type="button" class="shape-pill" data-fmt-pick="list" onclick="setDraftFormat('list')">
+                        <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        <span>List (one per line)</span>
+                    </button>
+                    <button type="button" class="shape-pill" data-fmt-pick="comma" onclick="setDraftFormat('comma')">
+                        <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="15" y2="15"/></svg>
+                        <span>Comma (run together)</span>
+                    </button>
+                </div>
+                <span class="field-hint">How student names are written in the exported PNG. A long class makes a taller image in List mode.</span>
+            </div>
+
+            <!-- Backup -->
+            <div class="panel" style="padding:0.85rem;text-align:left;display:flex;flex-direction:column;gap:0.65rem;">
+                <span class="field-label" style="font-size:0.85rem;color:var(--accent-color);">Backup (Export / Import)</span>
+                <div style="font-size:0.75rem;color:var(--muted-fg);line-height:1.4;">
+                    Choose which classes and whether to include settings. Saved attendance and homework history is never included. Each class keeps its own Google Sheet webhook.
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+                    <button type="button" id="openExportBackupBtn" class="btn-secondary">
+                        <svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span>Export…</span>
+                    </button>
+                    <label class="btn-secondary" style="cursor:pointer;">
+                        <svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span>Import…</span>
+                        <input id="importJsonFileInput" type="file" accept=".json,application/json" class="hidden" />
+                    </label>
                 </div>
             </div>
 
-            <!-- Theme Selector -->
             <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
                 <span class="field-label">App Background Theme</span>
                 <div class="theme-grid">
@@ -655,7 +759,6 @@
                 </div>
             </div>
 
-            <!-- Accent Color -->
             <div class="panel" style="padding:0.75rem;text-align:left;display:flex;flex-direction:column;gap:0.45rem;">
                 <span class="field-label">Accent Color</span>
                 <div class="swatch-row">
@@ -670,6 +773,23 @@
             <button type="button" id="saveSettingsBtn" class="btn-primary" style="width:100%;padding:0.75rem;">Save Settings</button>
 
             <p class="footer-sig">Designed by REAPER-357</p>
+        </div>
+    </div>
+
+    <!-- BACKUP PICKER MODAL (export & import) -->
+    <div id="backupModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('backupModal')" aria-label="Close">
+                <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 id="backupModalTitle" style="font-size:1.05rem;font-weight:800;">Export Backup</h3>
+            <p id="backupModalDesc" style="font-size:0.75rem;color:var(--muted-fg);line-height:1.4;"></p>
+            <div style="display:flex;gap:0.5rem;">
+                <button type="button" id="backupSelectAllBtn" class="btn-secondary" style="flex:1;">Select All</button>
+                <button type="button" id="backupSelectNoneBtn" class="btn-secondary" style="flex:1;">Select None</button>
+            </div>
+            <div id="backupChecklist" style="display:flex;flex-direction:column;gap:0.4rem;max-height:40vh;overflow-y:auto;"></div>
+            <button type="button" id="backupConfirmBtn" class="btn-primary" style="width:100%;padding:0.75rem;">Export</button>
         </div>
     </div>
 
@@ -690,19 +810,28 @@
             schoolMotto: '',
             teacherName: '',
             schoolLogoDataUrl: '',
-            exportFormat: 'list'
+            logoShape: 'rect',
+            exportFormat: 'list',
+            classSort: 'added'
         };
 
-        let classes = [];
-        let records = {}; // key: `${classId}_${dateStr}` -> { classId, date, attendance: {name: 'present'|'absent'}, homework: {name: 'done'|'missing'}, homeworkTopic: '', exportedAt: '' }
+        let classes = [];   // { id, name, startTime, students: [], webhookUrl }
+        let records = {};   // key `${classId}_${dateStr}` -> { classId, date, attendance, homework, homeworkTopic, exportedAt, attTouched, hwTouched }
 
         let activeClassId = null;
-        let activeTab = 'attendance'; // 'attendance' | 'homework'
+        let activeTab = 'attendance';
         let editingClassId = null;
         let draftRoster = [];
         let pendingDeleteClassId = null;
         let lastExportDataUrl = '';
         let lastExportFilename = 'attendance.png';
+
+        let draftLogoDataUrl = '';
+        let draftLogoShape = 'rect';
+        let draftExportFormat = 'list';
+
+        let backupMode = 'export';
+        let pendingImport = null;
 
         /* =========================================================
            UTILITIES
@@ -713,7 +842,7 @@
             toastEl.textContent = msg;
             toastEl.classList.remove('hidden');
             clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2600);
+            toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2800);
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -746,19 +875,79 @@
         function getDeviceTimestamp() {
             const now = new Date();
             return now.toLocaleString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                second: '2-digit'
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', second: '2-digit'
             });
         }
 
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        function normalizeWebhook(url) {
+            const u = (url || '').trim();
+            if (!u) return { ok: true, value: '' };
+            if (!/^https:\/\/\S+$/i.test(u)) return { ok: false, value: u };
+            return { ok: true, value: u };
+        }
+
+        // Rounded-rect path with fallback for older WebViews that lack ctx.roundRect
+        function rrPath(ctx, x, y, w, h, r) {
+            if (typeof ctx.roundRect === 'function') {
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, r);
+                return;
+            }
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.lineTo(x + w - rr, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+            ctx.lineTo(x + w, y + h - rr);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+            ctx.lineTo(x + rr, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+            ctx.lineTo(x, y + rr);
+            ctx.quadraticCurveTo(x, y, x + rr, y);
+            ctx.closePath();
+        }
+
+        /* ---------- Sorting ---------- */
+        const nameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+        const CLASS_SORTS = ['added', 'name-asc', 'name-desc', 'time-asc', 'time-desc'];
+        const STUDENT_SORTS = ['custom', 'az', 'za'];
+
+        function validClassSort() {
+            return CLASS_SORTS.includes(settings.classSort) ? settings.classSort : 'added';
+        }
+
+        function getSortedClasses() {
+            const arr = classes.slice();
+            const mode = validClassSort();
+            const byName = (a, b) => nameCollator.compare(a.name, b.name);
+            const byTime = (a, b) => (a.startTime || '').localeCompare(b.startTime || '');
+            if (mode === 'name-asc') arr.sort(byName);
+            else if (mode === 'name-desc') arr.sort((a, b) => byName(b, a));
+            else if (mode === 'time-asc') arr.sort((a, b) => byTime(a, b) || byName(a, b));
+            else if (mode === 'time-desc') arr.sort((a, b) => byTime(b, a) || byName(a, b));
+            return arr;
+        }
+
+        function getSortedStudents(cls) {
+            const arr = cls.students.slice();
+            if (cls.sortMode === 'az') arr.sort((a, b) => nameCollator.compare(a, b));
+            else if (cls.sortMode === 'za') arr.sort((a, b) => nameCollator.compare(b, a));
+            return arr;
+        }
+
         function saveAllData() {
-            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-            localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(classes));
-            localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records));
+            try {
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+                localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(classes));
+                localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records));
+            } catch (e) {
+                showToast('Storage full: could not save. Try a smaller logo.');
+            }
         }
 
         function loadAllData() {
@@ -774,6 +963,10 @@
                 const r = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECORDS));
                 if (r && typeof r === 'object') records = r;
             } catch (e) {}
+            // Webhooks now live on each class; drop the old global one
+            delete settings.webhookUrl;
+            if (!['round', 'square', 'rect'].includes(settings.logoShape)) settings.logoShape = 'rect';
+            if (!['list', 'comma'].includes(settings.exportFormat)) settings.exportFormat = 'list';
         }
 
         /* =========================================================
@@ -795,16 +988,16 @@
         }
 
         /* =========================================================
-           SETTINGS & SCHOOL LOGO
+           SETTINGS, SCHOOL LOGO & LOGO SHAPE
         ========================================================= */
         function renderSchoolBranding() {
             const logoSrc = settings.schoolLogoDataUrl || 'icon.png';
-            document.getElementById('mainSchoolLogo').src = logoSrc;
-            document.getElementById('settingsLogoPreview').src = logoSrc;
+            const mainLogo = document.getElementById('mainSchoolLogo');
+            mainLogo.src = logoSrc;
+            mainLogo.setAttribute('data-shape', settings.logoShape || 'rect');
             document.getElementById('headerLogoImg').src = 'small-icon.png';
 
-            const nameEl = document.getElementById('mainSchoolName');
-            nameEl.textContent = settings.schoolName.trim() || 'Your School Name';
+            document.getElementById('mainSchoolName').textContent = (settings.schoolName || '').trim() || 'Your School Name';
 
             const mottoEl = document.getElementById('mainSchoolMotto');
             if (settings.schoolMotto && settings.schoolMotto.trim()) {
@@ -815,23 +1008,46 @@
             }
 
             const teacherEl = document.getElementById('mainTeacherDisplay');
-            teacherEl.textContent = settings.teacherName.trim()
+            teacherEl.textContent = (settings.teacherName || '').trim()
                 ? `Teacher: ${settings.teacherName.trim()}`
                 : 'Teacher: Not set (tap gear icon to set)';
         }
 
-        function setExportFormat(fmt) {
-            settings.exportFormat = (fmt === 'comma') ? 'comma' : 'list';
-            document.getElementById('fmtListBtn').classList.toggle('active', settings.exportFormat === 'list');
-            document.getElementById('fmtCommaBtn').classList.toggle('active', settings.exportFormat === 'comma');
+        function updateSettingsPreview() {
+            const prev = document.getElementById('settingsLogoPreview');
+            prev.src = draftLogoDataUrl || 'icon.png';
+            prev.setAttribute('data-shape', draftLogoShape);
+            document.querySelectorAll('[data-shape-pick]').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-shape-pick') === draftLogoShape);
+            });
+        }
+
+        function setDraftShape(shape) {
+            draftLogoShape = shape;
+            updateSettingsPreview();
+        }
+
+        function updateFormatPills() {
+            document.querySelectorAll('[data-fmt-pick]').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-fmt-pick') === draftExportFormat);
+            });
+        }
+
+        function setDraftFormat(fmt) {
+            draftExportFormat = fmt;
+            updateFormatPills();
         }
 
         document.getElementById('openSettingsBtn').addEventListener('click', () => {
             document.getElementById('schoolNameInput').value = settings.schoolName || '';
             document.getElementById('schoolMottoInput').value = settings.schoolMotto || '';
             document.getElementById('teacherNameInput').value = settings.teacherName || '';
-            document.getElementById('settingsLogoPreview').src = settings.schoolLogoDataUrl || 'icon.png';
-            setExportFormat(settings.exportFormat || 'list');
+            draftLogoDataUrl = settings.schoolLogoDataUrl || '';
+            draftLogoShape = settings.logoShape || 'rect';
+            draftExportFormat = settings.exportFormat || 'list';
+            document.getElementById('schoolLogoFileInput').value = '';
+            updateSettingsPreview();
+            updateFormatPills();
             openModal('settingsModal');
         });
 
@@ -840,7 +1056,6 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
-                // Resize slightly to keep localStorage fast and compact
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
@@ -852,21 +1067,22 @@
                     }
                     canvas.width = w;
                     canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    settings.schoolLogoDataUrl = canvas.toDataURL('image/png');
-                    document.getElementById('settingsLogoPreview').src = settings.schoolLogoDataUrl;
-                    showToast('Logo loaded');
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    draftLogoDataUrl = canvas.toDataURL('image/png');
+                    updateSettingsPreview();
+                    showToast('Logo loaded. Pick a shape, then Save Settings');
                 };
+                img.onerror = () => showToast('Could not read that image');
                 img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         });
 
         document.getElementById('resetSchoolLogoBtn').addEventListener('click', () => {
-            settings.schoolLogoDataUrl = '';
-            document.getElementById('settingsLogoPreview').src = 'icon.png';
+            draftLogoDataUrl = '';
+            draftLogoShape = 'rect';
             document.getElementById('schoolLogoFileInput').value = '';
+            updateSettingsPreview();
             showToast('Logo reset to default');
         });
 
@@ -874,6 +1090,9 @@
             settings.schoolName = document.getElementById('schoolNameInput').value.trim();
             settings.schoolMotto = document.getElementById('schoolMottoInput').value.trim();
             settings.teacherName = document.getElementById('teacherNameInput').value.trim();
+            settings.schoolLogoDataUrl = draftLogoDataUrl;
+            settings.logoShape = draftLogoShape;
+            settings.exportFormat = draftExportFormat;
             saveAllData();
             renderSchoolBranding();
             closeModal('settingsModal');
@@ -883,7 +1102,14 @@
         /* =========================================================
            CLASSES LIST (HOME VIEW)
         ========================================================= */
+        document.getElementById('classSortSelect').addEventListener('change', (e) => {
+            settings.classSort = e.target.value;
+            saveAllData();
+            renderClassList();
+        });
+
         function renderClassList() {
+            document.getElementById('classSortSelect').value = validClassSort();
             const container = document.getElementById('classListContainer');
             container.innerHTML = '';
 
@@ -896,7 +1122,7 @@
                 return;
             }
 
-            classes.forEach(cls => {
+            getSortedClasses().forEach(cls => {
                 const card = document.createElement('div');
                 card.className = 'class-card';
 
@@ -908,6 +1134,7 @@
                         <span>Start: ${formatTime12h(cls.startTime)}</span>
                         <span>•</span>
                         <span>${cls.students.length} Students</span>
+                        ${cls.webhookUrl ? '<span>•</span><span style="color:var(--accent-color);">Sheet sync on</span>' : ''}
                     </div>
                 `;
                 mainArea.addEventListener('click', () => openClassScreen(cls.id, getTodayISO()));
@@ -915,7 +1142,6 @@
                 const actions = document.createElement('div');
                 actions.className = 'class-actions';
 
-                // Pen & paper icon for Edit
                 const editBtn = document.createElement('button');
                 editBtn.className = 'tiny-action-btn';
                 editBtn.title = 'Edit Class';
@@ -923,7 +1149,6 @@
                 editBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
                 editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditClassModal(cls.id); });
 
-                // Clock arrow back icon for History
                 const histBtn = document.createElement('button');
                 histBtn.className = 'tiny-action-btn';
                 histBtn.title = 'Class History';
@@ -931,7 +1156,6 @@
                 histBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>`;
                 histBtn.addEventListener('click', (e) => { e.stopPropagation(); openHistoryModal(cls.id); });
 
-                // Trash bin icon for Delete
                 const delBtn = document.createElement('button');
                 delBtn.className = 'tiny-action-btn del';
                 delBtn.title = 'Delete Class';
@@ -949,10 +1173,6 @@
             });
         }
 
-        function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
-        }
-
         /* =========================================================
            ADD / EDIT CLASS & BULK PASTE STUDENTS
         ========================================================= */
@@ -962,6 +1182,7 @@
             document.getElementById('classFormTitle').textContent = 'Create New Class';
             document.getElementById('classNameInput').value = '';
             document.getElementById('classStartTimeInput').value = '08:00';
+            document.getElementById('classWebhookInput').value = '';
             document.getElementById('bulkStudentsTextarea').value = '';
             renderDraftRoster();
             openModal('classFormModal');
@@ -975,9 +1196,17 @@
             document.getElementById('classFormTitle').textContent = 'Edit Class';
             document.getElementById('classNameInput').value = cls.name;
             document.getElementById('classStartTimeInput').value = cls.startTime || '08:00';
+            document.getElementById('classWebhookInput').value = cls.webhookUrl || '';
             document.getElementById('bulkStudentsTextarea').value = '';
             renderDraftRoster();
             openModal('classFormModal');
+        }
+
+        function parseNames(raw) {
+            return raw
+                .split(/[\r\n,]+/)
+                .map(line => line.replace(/^\s*\d+[\.\)\-:]\s*/, '').trim())
+                .filter(Boolean);
         }
 
         document.getElementById('addBulkStudentsBtn').addEventListener('click', () => {
@@ -986,20 +1215,13 @@
                 showToast('Paste or type names first');
                 return;
             }
-            // Split by newlines or commas, strip leading numbering like "1. " or "1) "
-            const parsed = raw
-                .split(/[\r\n,]+/)
-                .map(line => line.replace(/^\s*\d+[\.\)\-:]\s*/, '').trim())
-                .filter(Boolean);
-
             let addedCount = 0;
-            parsed.forEach(name => {
+            parseNames(raw).forEach(name => {
                 if (!draftRoster.some(existing => existing.toLowerCase() === name.toLowerCase())) {
                     draftRoster.push(name);
                     addedCount++;
                 }
             });
-
             document.getElementById('bulkStudentsTextarea').value = '';
             renderDraftRoster();
             showToast(`Added ${addedCount} student${addedCount === 1 ? '' : 's'}`);
@@ -1009,6 +1231,22 @@
             draftRoster = [];
             renderDraftRoster();
         });
+        document.getElementById('sortDraftAzBtn').addEventListener('click', () => {
+            draftRoster.sort((a, b) => nameCollator.compare(a, b));
+            renderDraftRoster();
+        });
+        document.getElementById('sortDraftZaBtn').addEventListener('click', () => {
+            draftRoster.sort((a, b) => nameCollator.compare(b, a));
+            renderDraftRoster();
+        });
+        function moveDraft(idx, dir) {
+            const to = idx + dir;
+            if (to < 0 || to >= draftRoster.length) return;
+            const tmp = draftRoster[idx];
+            draftRoster[idx] = draftRoster[to];
+            draftRoster[to] = tmp;
+            renderDraftRoster();
+        }
 
         function renderDraftRoster() {
             document.getElementById('draftRosterCount').textContent = draftRoster.length;
@@ -1021,16 +1259,35 @@
             draftRoster.forEach((name, idx) => {
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--input-bg);border:1px solid var(--bar-border);border-radius:0.6rem;padding:0.35rem 0.6rem;font-size:0.8rem;';
-                row.innerHTML = `<span>${idx + 1}. ${escapeHtml(name)}</span>`;
+                row.innerHTML = `<span style="flex:1;min-width:0;word-break:break-word;">${idx + 1}. ${escapeHtml(name)}</span>`;
+
+                const ctrls = document.createElement('div');
+                ctrls.style.cssText = 'display:flex;align-items:center;gap:0.15rem;flex-shrink:0;';
+
+                const mkBtn = (svg, label, disabled, fn) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.setAttribute('aria-label', label);
+                    b.style.cssText = 'padding:0.2rem 0.3rem;color:var(--muted-fg);display:inline-flex;' + (disabled ? 'opacity:0.25;' : '');
+                    b.innerHTML = svg;
+                    if (!disabled) b.addEventListener('click', fn);
+                    return b;
+                };
+                ctrls.appendChild(mkBtn('<svg class="ico" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>', 'Move up', idx === 0, () => moveDraft(idx, -1)));
+                ctrls.appendChild(mkBtn('<svg class="ico" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>', 'Move down', idx === draftRoster.length - 1, () => moveDraft(idx, 1)));
+
                 const rm = document.createElement('button');
                 rm.type = 'button';
-                rm.style.cssText = 'color:#ef4444;font-weight:700;padding:0 0.3rem;';
+                rm.setAttribute('aria-label', 'Remove');
+                rm.style.cssText = 'color:#ef4444;font-weight:700;padding:0 0.4rem;font-size:1rem;';
                 rm.textContent = '×';
                 rm.addEventListener('click', () => {
                     draftRoster.splice(idx, 1);
                     renderDraftRoster();
                 });
-                row.appendChild(rm);
+                ctrls.appendChild(rm);
+
+                row.appendChild(ctrls);
                 list.appendChild(row);
             });
         }
@@ -1038,26 +1295,18 @@
         document.getElementById('saveClassBtn').addEventListener('click', () => {
             const name = document.getElementById('classNameInput').value.trim();
             const startTime = document.getElementById('classStartTimeInput').value || '08:00';
+            const hook = normalizeWebhook(document.getElementById('classWebhookInput').value);
 
-            // If user left un-added text in textarea, automatically parse it too
             const leftoverRaw = document.getElementById('bulkStudentsTextarea').value.trim();
             if (leftoverRaw) {
-                leftoverRaw.split(/[\r\n,]+/)
-                    .map(line => line.replace(/^\s*\d+[\.\)\-:]\s*/, '').trim())
-                    .filter(Boolean)
-                    .forEach(n => {
-                        if (!draftRoster.some(e => e.toLowerCase() === n.toLowerCase())) draftRoster.push(n);
-                    });
+                parseNames(leftoverRaw).forEach(n => {
+                    if (!draftRoster.some(e => e.toLowerCase() === n.toLowerCase())) draftRoster.push(n);
+                });
             }
 
-            if (!name) {
-                showToast('Please enter a class name');
-                return;
-            }
-            if (draftRoster.length === 0) {
-                showToast('Add at least one student');
-                return;
-            }
+            if (!name) { showToast('Please enter a class name'); return; }
+            if (!hook.ok) { showToast('Webhook URL must start with https://'); return; }
+            if (draftRoster.length === 0) { showToast('Add at least one student'); return; }
 
             if (editingClassId) {
                 const cls = classes.find(c => c.id === editingClassId);
@@ -1065,6 +1314,7 @@
                     cls.name = name;
                     cls.startTime = startTime;
                     cls.students = [...draftRoster];
+                    cls.webhookUrl = hook.value;
                 }
                 showToast('Class updated');
             } else {
@@ -1072,13 +1322,16 @@
                     id: 'cls_' + Date.now(),
                     name,
                     startTime,
-                    students: [...draftRoster]
+                    students: [...draftRoster],
+                    webhookUrl: hook.value,
+                    sortMode: 'custom'
                 });
                 showToast('Class created');
             }
 
             saveAllData();
             renderClassList();
+            if (activeClassId) updateSyncButtonVisibility();
             closeModal('classFormModal');
         });
 
@@ -1091,10 +1344,8 @@
             pendingDeleteClassId = classId;
             document.getElementById('deleteConfirmPrompt').innerHTML =
                 `Delete <strong>${escapeHtml(cls.name)}</strong> and all its saved records? Type <strong>YES</strong> below to confirm.`;
-            const inp = document.getElementById('deleteYesInput');
-            const btn = document.getElementById('confirmDeleteClassBtn');
-            inp.value = '';
-            btn.disabled = true;
+            document.getElementById('deleteYesInput').value = '';
+            document.getElementById('confirmDeleteClassBtn').disabled = true;
             openModal('deleteModal');
         }
 
@@ -1115,6 +1366,75 @@
         });
 
         /* =========================================================
+           GOOGLE SHEET SYNC (one webhook per class)
+        ========================================================= */
+        function pickStatuses(cls, map, fallback) {
+            const out = {};
+            cls.students.forEach(s => { out[s] = (map && map[s]) || fallback; });
+            return out;
+        }
+
+        // Returns null if there is nothing meaningful to send for that day
+        function buildDayPayload(cls, rec, forceAtt, forceHw) {
+            const attOn = !!(forceAtt || rec.attTouched || rec.exportedAt);
+            const hwOn = !!(forceHw || rec.hwTouched || (rec.homeworkTopic && rec.homeworkTopic.trim()));
+            if (!attOn && !hwOn) return null;
+            return {
+                date: rec.date,
+                homeworkTopic: rec.homeworkTopic || '',
+                attendance: attOn ? pickStatuses(cls, rec.attendance, 'present') : null,
+                homework: hwOn ? pickStatuses(cls, rec.homework, 'done') : null
+            };
+        }
+
+        async function postToSheet(cls, days) {
+            if (!cls.webhookUrl) { showToast('No Google Sheet webhook set for this class'); return false; }
+            if (!days.length) { showToast('Nothing to sync yet'); return false; }
+            if (navigator.onLine === false) { showToast('You are offline. Sync again when you have internet'); return false; }
+
+            const payload = {
+                action: 'sync_days',
+                school: settings.schoolName || '',
+                teacher: settings.teacherName || '',
+                className: cls.name,
+                classId: cls.id,
+                students: getSortedStudents(cls),
+                days
+            };
+
+            showToast('Sending to Google Sheet…');
+            try {
+                // text/plain keeps this a "simple" request so no CORS preflight is needed
+                await fetch(cls.webhookUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                showToast(`Sent ${days.length} day${days.length === 1 ? '' : 's'} to Google Sheet`);
+                return true;
+            } catch (err) {
+                console.error(err);
+                showToast('Could not reach Google Sheet');
+                return false;
+            }
+        }
+
+        function updateSyncButtonVisibility() {
+            const cls = classes.find(c => c.id === activeClassId);
+            document.getElementById('syncSheetBtn').classList.toggle('hidden', !(cls && cls.webhookUrl));
+        }
+
+        document.getElementById('syncSheetBtn').addEventListener('click', async () => {
+            const cls = classes.find(c => c.id === activeClassId);
+            if (!cls) return;
+            const dateStr = document.getElementById('sessionDateInput').value || getTodayISO();
+            const rec = getOrCreateRecord(activeClassId, dateStr);
+            const day = buildDayPayload(cls, rec, activeTab === 'attendance', activeTab === 'homework');
+            await postToSheet(cls, day ? [day] : []);
+        });
+
+        /* =========================================================
            HISTORY MODAL
         ========================================================= */
         function openHistoryModal(classId) {
@@ -1132,6 +1452,22 @@
                 container.innerHTML = `<div style="font-size:0.8rem;color:var(--muted-fg);text-align:center;padding:1.5rem 0;">No saved days yet. Open the class and tap Export to save a day.</div>`;
                 openModal('historyModal');
                 return;
+            }
+
+            if (cls.webhookUrl) {
+                const syncAll = document.createElement('button');
+                syncAll.className = 'btn-primary';
+                syncAll.style.width = '100%';
+                syncAll.innerHTML = `<svg class="ico" viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><span>Sync all saved days to Google Sheet</span>`;
+                syncAll.addEventListener('click', async () => {
+                    const days = classRecords
+                        .slice()
+                        .sort((a, b) => a.date.localeCompare(b.date))
+                        .map(r => buildDayPayload(cls, r, false, false))
+                        .filter(Boolean);
+                    await postToSheet(cls, days);
+                });
+                container.appendChild(syncAll);
             }
 
             classRecords.forEach(rec => {
@@ -1174,24 +1510,24 @@
             if (!records[key]) {
                 const att = {};
                 const hw = {};
-                cls.students.forEach(s => {
-                    att[s] = 'present';
-                    hw[s] = 'done';
-                });
+                cls.students.forEach(s => { att[s] = 'present'; hw[s] = 'done'; });
                 records[key] = {
                     classId,
                     date: dateStr,
                     attendance: att,
                     homework: hw,
                     homeworkTopic: '',
-                    exportedAt: ''
+                    exportedAt: '',
+                    attTouched: false,
+                    hwTouched: false
                 };
             } else {
-                // Ensure newly added students get default entries
+                const rec = records[key];
+                if (!rec.attendance) rec.attendance = {};
+                if (!rec.homework) rec.homework = {};
                 cls.students.forEach(s => {
-                    if (!records[key].attendance[s]) records[key].attendance[s] = 'present';
-                    if (!records[key].homework) records[key].homework = {};
-                    if (!records[key].homework[s]) records[key].homework[s] = 'done';
+                    if (!rec.attendance[s]) rec.attendance[s] = 'present';
+                    if (!rec.homework[s]) rec.homework[s] = 'done';
                 });
             }
             return records[key];
@@ -1205,7 +1541,7 @@
             document.getElementById('homeView').classList.add('hidden');
             document.getElementById('classView').classList.remove('hidden');
             document.getElementById('homeBtn').classList.remove('hidden');
-
+            updateSyncButtonVisibility();
             switchClassTab('attendance');
         }
 
@@ -1221,11 +1557,20 @@
             renderActiveClassRoll();
         });
 
+        document.getElementById('studentSortSelect').addEventListener('change', (e) => {
+            const cls = classes.find(c => c.id === activeClassId);
+            if (!cls) return;
+            cls.sortMode = e.target.value;
+            saveAllData();
+            renderActiveClassRoll();
+        });
+
         document.getElementById('homeworkTopicInput').addEventListener('input', (e) => {
             if (!activeClassId) return;
             const dateStr = document.getElementById('sessionDateInput').value;
             const rec = getOrCreateRecord(activeClassId, dateStr);
             rec.homeworkTopic = e.target.value;
+            rec.hwTouched = true;
             saveAllData();
         });
 
@@ -1249,6 +1594,7 @@
                 if (activeTab === 'attendance') rec.attendance[s] = 'present';
                 else rec.homework[s] = 'done';
             });
+            if (activeTab === 'attendance') rec.attTouched = true; else rec.hwTouched = true;
             saveAllData();
             renderActiveClassRoll();
         });
@@ -1263,6 +1609,7 @@
             document.getElementById('activeClassMeta').textContent =
                 `Start Time: ${formatTime12h(cls.startTime)} • ${formatPrettyDate(dateStr)}`;
             document.getElementById('homeworkTopicInput').value = rec.homeworkTopic || '';
+            document.getElementById('studentSortSelect').value = STUDENT_SORTS.includes(cls.sortMode) ? cls.sortMode : 'custom';
 
             const listEl = document.getElementById('studentRollList');
             listEl.innerHTML = '';
@@ -1270,7 +1617,7 @@
             let countPos = 0;
             let countNeg = 0;
 
-            cls.students.forEach((studentName, idx) => {
+            getSortedStudents(cls).forEach((studentName, idx) => {
                 const row = document.createElement('div');
                 row.className = 'student-row';
 
@@ -1290,6 +1637,7 @@
                     presBtn.textContent = 'Present';
                     presBtn.addEventListener('click', () => {
                         rec.attendance[studentName] = 'present';
+                        rec.attTouched = true;
                         saveAllData();
                         renderActiveClassRoll();
                     });
@@ -1299,6 +1647,7 @@
                     absBtn.textContent = 'Absent';
                     absBtn.addEventListener('click', () => {
                         rec.attendance[studentName] = 'absent';
+                        rec.attTouched = true;
                         saveAllData();
                         renderActiveClassRoll();
                     });
@@ -1314,6 +1663,7 @@
                     doneBtn.textContent = 'Done';
                     doneBtn.addEventListener('click', () => {
                         rec.homework[studentName] = 'done';
+                        rec.hwTouched = true;
                         saveAllData();
                         renderActiveClassRoll();
                     });
@@ -1323,6 +1673,7 @@
                     missBtn.textContent = 'Missing';
                     missBtn.addEventListener('click', () => {
                         rec.homework[studentName] = 'missing';
+                        rec.hwTouched = true;
                         saveAllData();
                         renderActiveClassRoll();
                     });
@@ -1370,6 +1721,42 @@
             return lines;
         }
 
+        function drawCover(ctx, img, x, y, w, h) {
+            const s = Math.max(w / img.width, h / img.height);
+            const dw = img.width * s, dh = img.height * s;
+            ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+        }
+
+        function drawContain(ctx, img, x, y, w, h) {
+            const s = Math.min(w / img.width, h / img.height);
+            const dw = img.width * s, dh = img.height * s;
+            ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+        }
+
+        // Draws the school logo in the chosen shape. Returns the width used.
+        function drawSchoolLogo(ctx, img, shape, x, y, size) {
+            ctx.save();
+            let usedW = size;
+            if (shape === 'round') {
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                drawCover(ctx, img, x, y, size, size);
+            } else if (shape === 'square') {
+                rrPath(ctx, x, y, size, size, 16);
+                ctx.clip();
+                drawCover(ctx, img, x, y, size, size);
+            } else {
+                usedW = Math.min(Math.round(size * (img.width / img.height)), 240);
+                rrPath(ctx, x, y, usedW, size, 12);
+                ctx.clip();
+                drawContain(ctx, img, x, y, usedW, size);
+            }
+            ctx.restore();
+            return usedW;
+        }
+
         document.getElementById('exportPngBtn').addEventListener('click', async () => {
             if (!activeClassId) return;
             const cls = classes.find(c => c.id === activeClassId);
@@ -1378,103 +1765,78 @@
 
             const exportTimestamp = getDeviceTimestamp();
             rec.exportedAt = exportTimestamp;
+            if (activeTab === 'attendance') rec.attTouched = true; else rec.hwTouched = true;
             saveAllData();
 
             const isAttendance = (activeTab === 'attendance');
             const groupALabel = isAttendance ? 'In Class:' : 'Homework Completed:';
             const groupBLabel = isAttendance ? 'Absent:' : 'Homework Missing:';
 
-            const groupANames = cls.students.filter(s =>
+            const groupANames = getSortedStudents(cls).filter(s =>
                 isAttendance ? (rec.attendance[s] === 'present') : (rec.homework[s] === 'done')
             );
-            const groupBNames = cls.students.filter(s =>
+            const groupBNames = getSortedStudents(cls).filter(s =>
                 isAttendance ? (rec.attendance[s] === 'absent') : (rec.homework[s] === 'missing')
             );
 
-            const schoolName = settings.schoolName.trim() || 'School Report';
-            const schoolMotto = settings.schoolMotto.trim();
-            const teacherName = settings.teacherName.trim() || 'Teacher';
+            const schoolName = (settings.schoolName || '').trim() || 'School Report';
+            const schoolMotto = (settings.schoolMotto || '').trim();
+            const teacherName = (settings.teacherName || '').trim() || 'Teacher';
 
             const logoImg = await loadImageSafe(settings.schoolLogoDataUrl || 'icon.png');
 
-            // Prepare high-DPI canvas
             const width = 900;
             const pad = 54;
             const contentW = width - pad * 2;
 
-            // Measure height dynamically
             const measureCanvas = document.createElement('canvas');
             const mCtx = measureCanvas.getContext('2d');
 
-            mCtx.font = '500 23px system-ui, -apple-system, sans-serif';
-            const isListLayout = (settings.exportFormat || 'list') === 'list';
-            function buildGroupLines(namesArr) {
-                if (!namesArr.length) return ['None'];
-                if (isListLayout) {
-                    const out = [];
-                    namesArr.forEach((n, idx) => {
-                        const wrapped = wrapTextLines(mCtx, `${idx + 1}. ${n}`, contentW - 40);
-                        out.push(...wrapped);
-                    });
-                    return out;
-                }
-                return wrapTextLines(mCtx, namesArr.join(', '), contentW - 40);
+            mCtx.font = '600 24px system-ui, -apple-system, sans-serif';
+            const asList = (settings.exportFormat || 'list') === 'list';
+            function namesToLines(names) {
+                if (!names.length) return ['None'];
+                if (asList) return names.slice();
+                return wrapTextLines(mCtx, names.join(', '), contentW - 36);
             }
-            const groupALines = buildGroupLines(groupANames);
-            const groupBLines = buildGroupLines(groupBNames);
+            const groupALines = namesToLines(groupANames);
+            const groupBLines = namesToLines(groupBNames);
 
             const footerLine1 = `${isAttendance ? 'Attendance' : 'Homework'} done by Teacher ${teacherName}`;
             const footerLine2 = `It is accurate as of ${exportTimestamp}`;
 
-            let totalH = 60; // top pad
-            totalH += 96; // header logo + school name + motto
-            totalH += 36; // divider
-            totalH += 110; // Date, Class Name, Class Start Time (+ optional HW topic)
+            let totalH = 60;
+            totalH += 96;
+            totalH += 36;
+            totalH += 110;
             if (!isAttendance && rec.homeworkTopic) totalH += 34;
-            totalH += 32; // spacing
-            totalH += 56 + groupALines.length * 34 + 28; // Group A card
-            totalH += 24; // gap
-            totalH += 56 + groupBLines.length * 34 + 28; // Group B card
-            totalH += 44; // divider
-            totalH += 88; // footer
-            totalH += 40; // bottom pad
+            totalH += 32;
+            totalH += 56 + groupALines.length * 34 + 28;
+            totalH += 24;
+            totalH += 56 + groupBLines.length * 34 + 28;
+            totalH += 44;
+            totalH += 88;
+            totalH += 40;
 
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = totalH;
             const ctx = canvas.getContext('2d');
 
-            // Clean crisp white background for easy printing & sharing on Messenger/Telegram
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, width, totalH);
 
-            // Outer subtle border
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 4;
             ctx.strokeRect(16, 16, width - 32, totalH - 32);
 
             let y = 56;
 
-            // Top: School logo (preserving natural square, circle, or rectangle aspect ratio) + School name + Motto underneath
-            const maxLogoBox = 90;
+            const logoSize = 84;
             let textStartX = pad;
             if (logoImg) {
-                const aspect = logoImg.width / logoImg.height;
-                let lW = maxLogoBox, lH = maxLogoBox;
-                if (aspect > 1) { lH = maxLogoBox / aspect; }
-                else { lW = maxLogoBox * aspect; }
-                
-                // Center vertically within the logo header block
-                const lX = pad;
-                const lY = y + (maxLogoBox - lH) / 2;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.roundRect(lX, lY, lW, lH, 14);
-                ctx.clip();
-                ctx.drawImage(logoImg, lX, lY, lW, lH);
-                ctx.restore();
-                textStartX = pad + maxLogoBox + 22;
+                const usedW = drawSchoolLogo(ctx, logoImg, settings.logoShape || 'rect', pad, y, logoSize);
+                textStartX = pad + usedW + 22;
             }
 
             ctx.fillStyle = '#0f172a';
@@ -1487,9 +1849,8 @@
                 ctx.fillText(schoolMotto, textStartX, y + 70);
             }
 
-            y += maxLogoBox + 24;
+            y += logoSize + 24;
 
-            // Divider
             ctx.strokeStyle = '#e2e8f0';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1499,7 +1860,6 @@
 
             y += 38;
 
-            // Date, Class Name, Class Start Time
             ctx.fillStyle = '#0f172a';
             ctx.font = '700 24px system-ui, -apple-system, sans-serif';
             ctx.fillText(`Date: ${formatPrettyDate(dateStr)}`, pad, y);
@@ -1517,13 +1877,11 @@
 
             y += 34;
 
-            // Box A: In Class (or Homework Completed)
             const boxAH = 52 + groupALines.length * 34 + 22;
             ctx.fillStyle = '#f0fdf4';
             ctx.strokeStyle = '#86efac';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(pad, y, contentW, boxAH, 16);
+            rrPath(ctx, pad, y, contentW, boxAH, 16);
             ctx.fill();
             ctx.stroke();
 
@@ -1539,13 +1897,11 @@
 
             y += boxAH + 22;
 
-            // Box B: Absent (or Homework Missing)
             const boxBH = 52 + groupBLines.length * 34 + 22;
             ctx.fillStyle = isAttendance ? '#fef2f2' : '#fffbeb';
             ctx.strokeStyle = isAttendance ? '#fca5a5' : '#fcd34d';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(pad, y, contentW, boxBH, 16);
+            rrPath(ctx, pad, y, contentW, boxBH, 16);
             ctx.fill();
             ctx.stroke();
 
@@ -1561,7 +1917,6 @@
 
             y += boxBH + 34;
 
-            // Footer Divider
             ctx.strokeStyle = '#e2e8f0';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1571,7 +1926,6 @@
 
             y += 36;
 
-            // Bottom Footer Text
             ctx.fillStyle = '#1e293b';
             ctx.font = '700 22px system-ui, -apple-system, sans-serif';
             ctx.fillText(footerLine1, pad, y);
@@ -1606,16 +1960,154 @@
                 const blob = await res.blob();
                 const file = new File([blob], lastExportFilename, { type: 'image/png' });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: lastExportFilename
-                    });
+                    await navigator.share({ files: [file], title: lastExportFilename });
                 } else {
                     showToast('Use Download PNG on this device');
                 }
             } catch (err) {
                 showToast('Share cancelled');
             }
+        });
+
+        /* =========================================================
+           BACKUP: EXPORT & IMPORT (pick classes / settings)
+        ========================================================= */
+        function addCheckRow(container, key, labelText) {
+            const row = document.createElement('label');
+            row.className = 'check-row';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = true;
+            cb.setAttribute('data-key', key);
+            const span = document.createElement('span');
+            span.textContent = labelText;
+            row.appendChild(cb);
+            row.appendChild(span);
+            container.appendChild(row);
+        }
+
+        function openBackupModal(mode, importData) {
+            backupMode = mode;
+            pendingImport = importData || null;
+            const list = document.getElementById('backupChecklist');
+            list.innerHTML = '';
+
+            const isExport = (mode === 'export');
+            const hasSettings = isExport ? true : !!(importData && importData.settings);
+            const classList = isExport ? classes : ((importData && importData.classes) || []);
+
+            document.getElementById('backupModalTitle').textContent = isExport ? 'Export Backup' : 'Import Backup';
+            document.getElementById('backupModalDesc').textContent = isExport
+                ? 'Tick what to include. History (attendance and homework records) is never exported.'
+                : 'Tick what to import. A class with the same ID is updated; others are added. Your saved history is not touched.';
+            document.getElementById('backupConfirmBtn').textContent = isExport ? 'Download Backup' : 'Import Selected';
+
+            if (hasSettings) addCheckRow(list, 'settings', 'App settings (school, motto, teacher, logo, shape)');
+            classList.forEach(c => addCheckRow(list, 'class:' + c.id, `${c.name} (${c.students.length} students)`));
+
+            if (!hasSettings && classList.length === 0) {
+                list.innerHTML = `<div style="font-size:0.8rem;color:var(--muted-fg);text-align:center;padding:1rem 0;">${isExport ? 'No classes yet. You can still export settings.' : 'This file has nothing to import.'}</div>`;
+            }
+            openModal('backupModal');
+        }
+
+        function backupCheckedKeys() {
+            return Array.from(document.querySelectorAll('#backupChecklist input[type="checkbox"]:checked'))
+                .map(cb => cb.getAttribute('data-key'));
+        }
+
+        document.getElementById('backupSelectAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('#backupChecklist input[type="checkbox"]').forEach(cb => cb.checked = true);
+        });
+        document.getElementById('backupSelectNoneBtn').addEventListener('click', () => {
+            document.querySelectorAll('#backupChecklist input[type="checkbox"]').forEach(cb => cb.checked = false);
+        });
+
+        document.getElementById('openExportBackupBtn').addEventListener('click', () => openBackupModal('export'));
+
+        document.getElementById('backupConfirmBtn').addEventListener('click', () => {
+            const keys = backupCheckedKeys();
+            if (keys.length === 0) { showToast('Tick at least one item'); return; }
+
+            if (backupMode === 'export') {
+                const incSettings = keys.includes('settings');
+                const picked = classes
+                    .filter(c => keys.includes('class:' + c.id))
+                    .map(c => ({ id: c.id, name: c.name, startTime: c.startTime, students: [...c.students], webhookUrl: c.webhookUrl || '', sortMode: c.sortMode || 'custom' }));
+                const payload = {
+                    app: 'ClassroomHelper',
+                    version: 2,
+                    exportedAt: new Date().toISOString(),
+                    settings: incSettings ? { ...settings } : null,
+                    classes: picked
+                    // History is intentionally never included
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `classroom_helper_backup_${getTodayISO()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                closeModal('backupModal');
+                showToast('Backup exported');
+            } else {
+                if (!pendingImport) return;
+                let addedC = 0, updatedC = 0, didSettings = false;
+                if (keys.includes('settings') && pendingImport.settings) {
+                    settings = { ...settings, ...pendingImport.settings };
+                    delete settings.webhookUrl;
+                    if (!['round', 'square', 'rect'].includes(settings.logoShape)) settings.logoShape = 'rect';
+                    didSettings = true;
+                }
+                (pendingImport.classes || []).forEach(c => {
+                    if (!keys.includes('class:' + c.id)) return;
+                    const clean = { id: c.id, name: c.name, startTime: c.startTime || '08:00', students: [...c.students], webhookUrl: c.webhookUrl || '', sortMode: STUDENT_SORTS.includes(c.sortMode) ? c.sortMode : 'custom' };
+                    const idx = classes.findIndex(x => x.id === c.id);
+                    if (idx >= 0) { classes[idx] = clean; updatedC++; } else { classes.push(clean); addedC++; }
+                });
+                saveAllData();
+                renderSchoolBranding();
+                renderClassList();
+                closeModal('backupModal');
+                closeModal('settingsModal');
+                const bits = [];
+                if (addedC) bits.push(`${addedC} added`);
+                if (updatedC) bits.push(`${updatedC} updated`);
+                if (didSettings) bits.push('settings');
+                showToast('Imported: ' + (bits.join(', ') || 'nothing'));
+                pendingImport = null;
+            }
+        });
+
+        document.getElementById('importJsonFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!data || typeof data !== 'object') throw new Error('bad');
+                    const cleanClasses = (Array.isArray(data.classes) ? data.classes : [])
+                        .filter(c => c && c.name && Array.isArray(c.students))
+                        .map((c, i) => ({
+                            id: c.id || ('cls_' + Date.now() + '_' + i),
+                            name: String(c.name),
+                            startTime: c.startTime || '08:00',
+                            students: c.students.map(String),
+                            webhookUrl: typeof c.webhookUrl === 'string' ? c.webhookUrl : '',
+                            sortMode: STUDENT_SORTS.includes(c.sortMode) ? c.sortMode : 'custom'
+                        }));
+                    const cleanSettings = (data.settings && typeof data.settings === 'object') ? data.settings : null;
+                    openBackupModal('import', { settings: cleanSettings, classes: cleanClasses });
+                } catch (err) {
+                    showToast('Invalid JSON backup file');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
         });
 
         /* =========================================================
@@ -1630,29 +2122,10 @@
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then((registration) => {
-                    // Force an immediate update check when page loads
                     registration.update();
-
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                console.log('New service worker available.');
-                            }
-                        });
-                    });
                 }).catch((error) => {
                     console.error('SW registration failed:', error);
                 });
-            }
-        });
-
-        // Reload page automatically when the new service worker takes control
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                refreshing = true;
-                window.location.reload();
             }
         });
     </script>
