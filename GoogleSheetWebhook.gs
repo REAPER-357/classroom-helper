@@ -15,8 +15,8 @@
  * If you change this code later: Deploy > Manage deployments > Edit > New version.
  *
  * LAYOUT (one tab per month for each type):
- *   "Attendance 2026-11"  1 = present, X = absent
- *   "Homework 2026-11"    1 = submitted, X = not submitted
+ *   "Attendance 2026-11"  1 = present, 0.5 = late, X = absent
+ *   "Homework 2026-11"    1 = submitted, 0.5 = late, X = not submitted
  *   Row 1: class name, then 1, 2, 3 ... (class day number)
  *   Names down column A, one column per day
  *   Bottom: Date row (vertical text), and on Homework a Note row (assignment title)
@@ -30,21 +30,24 @@ function doPost(e) {
     if (data.action !== 'sync_days') return out_({ ok: false, error: 'Unknown action' });
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      return out_({ ok: false, error: 'Script is not attached to a Google Sheet. Open the sheet, then Extensions > Apps Script.' });
+    }
     var students = data.students || [];
     var className = data.className || 'Class';
 
     (data.days || []).forEach(function (day) {
       if (!day.date) return;
       if (day.attendance) {
-        writeDay_(ss, 'Attendance', className, day.date, students, day.attendance, 'present', 'absent', null);
+        writeDay_(ss, 'Attendance', className, day.date, students, day.attendance, 'present', 'late', 'absent', null);
       }
       if (day.homework) {
-        writeDay_(ss, 'Homework', className, day.date, students, day.homework, 'done', 'missing', day.homeworkTopic || '');
+        writeDay_(ss, 'Homework', className, day.date, students, day.homework, 'done', 'late', 'missing', day.homeworkTopic || '');
       }
     });
 
     SpreadsheetApp.flush();
-    return out_({ ok: true });
+    return out_({ ok: true, sheet: ss.getName() });
   } catch (err) {
     return out_({ ok: false, error: String(err) });
   } finally {
@@ -53,7 +56,9 @@ function doPost(e) {
 }
 
 function doGet() {
-  return out_({ ok: true, message: 'Classroom Helper webhook is running' });
+  var name = '';
+  try { name = SpreadsheetApp.getActiveSpreadsheet().getName(); } catch (e) {}
+  return out_({ ok: true, message: 'Classroom Helper webhook is running', sheet: name });
 }
 
 function out_(obj) {
@@ -96,7 +101,7 @@ function ensureSize_(sh, rows, cols) {
   if (sh.getMaxColumns() < cols) sh.insertColumnsAfter(sh.getMaxColumns(), cols - sh.getMaxColumns());
 }
 
-function writeDay_(ss, kind, className, dateStr, students, statuses, okWord, badWord, note) {
+function writeDay_(ss, kind, className, dateStr, students, statuses, okWord, lateWord, badWord, note) {
   var isHw = (kind === 'Homework');
   var tabName = kind + ' ' + String(dateStr).substring(0, 7);
   var sh = getTab_(ss, kind, tabName);
@@ -170,9 +175,10 @@ function writeDay_(ss, kind, className, dateStr, students, statuses, okWord, bad
       var st = statuses[names[r]];
       var v = cur[r][0];
       if (st === okWord) v = 1;
+      else if (st === lateWord) v = 0.5;
       else if (st === badWord) v = 'X';
       vals.push([v]);
-      colors.push([v === 'X' ? '#d93025' : '#188038']);
+      colors.push([v === 'X' ? '#d93025' : (v === 0.5 ? '#1a73e8' : '#188038')]);
       weights.push([v === 'X' ? 'bold' : 'normal']);
     }
     rng.setValues(vals).setFontColors(colors).setFontWeights(weights).setHorizontalAlignment('center');

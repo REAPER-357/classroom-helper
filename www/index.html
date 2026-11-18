@@ -264,7 +264,7 @@
         /* Tabs inside Class View */
         .mode-tabs {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             background-color: var(--input-bg);
             border: 1px solid var(--bar-border);
             border-radius: 0.9rem;
@@ -297,9 +297,9 @@
             border: 1px solid var(--bar-border);
         }
         .student-name { font-size: 0.88rem; font-weight: 600; flex: 1; min-width: 0; word-break: break-word; }
-        .status-btn-group { display: flex; gap: 0.35rem; flex-shrink: 0; }
+        .status-btn-group { display: flex; gap: 0.3rem; flex-shrink: 0; }
         .status-btn {
-            padding: 0.42rem 0.75rem;
+            padding: 0.42rem 0.6rem;
             border-radius: 0.65rem;
             font-size: 0.75rem;
             font-weight: 700;
@@ -312,6 +312,31 @@
         .status-btn.absent.active { background-color: #ef4444; border-color: #ef4444; color: #ffffff; }
         .status-btn.hw-done.active { background-color: #10b981; border-color: #10b981; color: #ffffff; }
         .status-btn.hw-missing.active { background-color: #f59e0b; border-color: #f59e0b; color: #ffffff; }
+        .status-btn.late.active { background-color: #3b82f6; border-color: #3b82f6; color: #ffffff; }
+
+        /* Daily Activity tab */
+        .act-chip {
+            padding: 0.5rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            border: 1px dashed var(--accent-color);
+            color: var(--accent-color);
+            background-color: var(--input-bg);
+        }
+        .act-chip:active { opacity: 0.75; }
+        .act-card {
+            background-color: var(--input-bg);
+            border: 1px solid var(--bar-border);
+            border-radius: 1rem;
+            padding: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+        .act-head { display: flex; align-items: center; justify-content: space-between; }
+        .act-title { font-size: 0.8rem; font-weight: 800; color: var(--accent-color); }
+        .act-del { color: #ef4444; font-weight: 700; font-size: 1.2rem; padding: 0 0.4rem; line-height: 1; }
 
         /* Form inputs */
         .field-group { display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
@@ -513,6 +538,7 @@
             <div class="mode-tabs">
                 <button id="tabAttendance" class="mode-tab active" onclick="switchClassTab('attendance')">Attendance</button>
                 <button id="tabHomework" class="mode-tab" onclick="switchClassTab('homework')">Homework</button>
+                <button id="tabActivity" class="mode-tab" onclick="switchClassTab('activity')">Activity</button>
             </div>
 
             <div id="homeworkTopicBox" class="field-group hidden">
@@ -520,7 +546,7 @@
                 <input id="homeworkTopicInput" type="text" class="field-input" placeholder="e.g. Workbook Page 14-15" />
             </div>
 
-            <div class="summary-bar">
+            <div id="summaryBar" class="summary-bar">
                 <span id="liveCountText">Present: 0 • Absent: 0</span>
                 <div style="display:flex;gap:0.4rem;">
                     <button id="markAllPositiveBtn" class="btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.7rem;">All Present</button>
@@ -537,6 +563,19 @@
             </div>
 
             <div id="studentRollList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+
+            <!-- Daily Activity editor -->
+            <div id="activityPanel" class="hidden" style="display:flex;flex-direction:column;gap:0.75rem;">
+                <div class="field-hint" style="font-size:0.74rem;">Tap to add items for this day. You can add each one more than once. Items are saved on this device for this class and date.</div>
+                <div id="activityAddRow" style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+                    <button type="button" class="act-chip" data-add="subject">+ Subject / Description</button>
+                    <button type="button" class="act-chip" data-add="project">+ Project</button>
+                    <button type="button" class="act-chip" data-add="presentation">+ Presentation</button>
+                    <button type="button" class="act-chip" data-add="speech">+ Speech</button>
+                    <button type="button" class="act-chip" data-add="homework">+ Homework</button>
+                </div>
+                <div id="activityList" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
+            </div>
 
             <div style="padding-top:0.4rem;display:flex;flex-direction:column;gap:0.5rem;">
                 <button id="exportPngBtn" class="btn-primary" style="width:100%;padding:0.85rem;font-size:0.9rem;">
@@ -576,7 +615,11 @@
             <div class="field-group">
                 <label class="field-label" for="classWebhookInput">Google Sheet Webhook URL (Optional)</label>
                 <input id="classWebhookInput" type="text" class="field-input" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:0.75rem;" autocomplete="off" autocapitalize="off" spellcheck="false" />
-                <span class="field-hint">Each class has its own Google Sheet. Leave empty if you do not want to sync this class.</span>
+                <span class="field-hint">Each class has its own Google Sheet and its own URL. Leave empty if you do not want to sync this class.</span>
+                <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.2rem;">
+                    <button type="button" id="testWebhookBtn" class="btn-secondary" style="padding:0.4rem 0.7rem;font-size:0.72rem;flex-shrink:0;">Test connection</button>
+                    <span id="webhookTestResult" class="field-hint"></span>
+                </div>
             </div>
 
             <div class="field-group">
@@ -644,7 +687,7 @@
                 <svg class="ico ico-lg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <h3 style="font-size:1rem;font-weight:800;">PNG Report Ready</h3>
-            <p style="font-size:0.74rem;color:var(--muted-fg);">Saved to class history. Download or share the PNG image below.</p>
+            <p style="font-size:0.74rem;color:var(--muted-fg);">Saved to class history. Download or share the PNG below. If Download does nothing, press and hold the image to save it.</p>
             <img id="exportedPreviewImg" alt="Exported Report" style="width:100%;border-radius:0.85rem;border:1px solid var(--bar-border);" />
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
                 <button id="downloadPngBtn" class="btn-primary">Download PNG</button>
@@ -882,6 +925,12 @@
 
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        // Last 6 characters of the deployment ID, so you can tell two classes' URLs apart at a glance
+        function webhookTag(url) {
+            const m = /\/s\/([^/]+)\/exec/.exec(url || '');
+            return m ? '…' + m[1].slice(-6) : '';
         }
 
         function normalizeWebhook(url) {
@@ -1134,7 +1183,7 @@
                         <span>Start: ${formatTime12h(cls.startTime)}</span>
                         <span>•</span>
                         <span>${cls.students.length} Students</span>
-                        ${cls.webhookUrl ? '<span>•</span><span style="color:var(--accent-color);">Sheet sync on</span>' : ''}
+                        ${cls.webhookUrl ? '<span>•</span><span style="color:var(--accent-color);">Sheet sync on ' + escapeHtml(webhookTag(cls.webhookUrl)) + '</span>' : ''}
                     </div>
                 `;
                 mainArea.addEventListener('click', () => openClassScreen(cls.id, getTodayISO()));
@@ -1183,6 +1232,7 @@
             document.getElementById('classNameInput').value = '';
             document.getElementById('classStartTimeInput').value = '08:00';
             document.getElementById('classWebhookInput').value = '';
+            document.getElementById('webhookTestResult').textContent = '';
             document.getElementById('bulkStudentsTextarea').value = '';
             renderDraftRoster();
             openModal('classFormModal');
@@ -1197,6 +1247,7 @@
             document.getElementById('classNameInput').value = cls.name;
             document.getElementById('classStartTimeInput').value = cls.startTime || '08:00';
             document.getElementById('classWebhookInput').value = cls.webhookUrl || '';
+            document.getElementById('webhookTestResult').textContent = '';
             document.getElementById('bulkStudentsTextarea').value = '';
             renderDraftRoster();
             openModal('classFormModal');
@@ -1306,6 +1357,13 @@
 
             if (!name) { showToast('Please enter a class name'); return; }
             if (!hook.ok) { showToast('Webhook URL must start with https://'); return; }
+            if (hook.value) {
+                const dup = classes.find(c => c.id !== editingClassId && c.webhookUrl === hook.value);
+                if (dup) {
+                    showToast(`“${dup.name}” already uses this URL. Each class needs its own Google Sheet and URL`);
+                    return;
+                }
+            }
             if (draftRoster.length === 0) { showToast('Add at least one student'); return; }
 
             if (editingClassId) {
@@ -1403,26 +1461,70 @@
             };
 
             showToast('Sending to Google Sheet…');
+            const dayWord = `${days.length} day${days.length === 1 ? '' : 's'}`;
+            const body = JSON.stringify(payload);
+            const headers = { 'Content-Type': 'text/plain;charset=utf-8' }; // keeps it a "simple" request (no preflight)
             try {
-                // text/plain keeps this a "simple" request so no CORS preflight is needed
-                await fetch(cls.webhookUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                showToast(`Sent ${days.length} day${days.length === 1 ? '' : 's'} to Google Sheet`);
-                return true;
+                // Normal request first, so the script's reply can be read and real errors shown
+                const res = await fetch(cls.webhookUrl, { method: 'POST', headers, body });
+                let reply = null;
+                try { reply = JSON.parse(await res.text()); } catch (e) {}
+                if (reply && reply.ok === true) {
+                    showToast(`Synced ${dayWord} to ` + (reply.sheet ? `“${reply.sheet}”` : 'Google Sheet'));
+                    return true;
+                }
+                if (reply && reply.ok === false) {
+                    showToast('Google Sheet error: ' + (reply.error || 'unknown'));
+                    return false;
+                }
+                showToast('No valid reply from Google. Check the deployment access is Anyone and the URL ends in /exec');
+                return false;
             } catch (err) {
                 console.error(err);
-                showToast('Could not reach Google Sheet');
-                return false;
+                // The reply could not be read (blocked or sign-in redirect). Send once the old way.
+                try {
+                    await fetch(cls.webhookUrl, { method: 'POST', mode: 'no-cors', headers, body });
+                    showToast(`Sent ${dayWord} but could not confirm. If the sheet stays empty, set the deployment access to Anyone`);
+                    return true;
+                } catch (err2) {
+                    showToast('Could not reach Google Sheet');
+                    return false;
+                }
             }
         }
 
+        document.getElementById('testWebhookBtn').addEventListener('click', async () => {
+            const out = document.getElementById('webhookTestResult');
+            const hook = normalizeWebhook(document.getElementById('classWebhookInput').value);
+            if (!hook.value) { out.textContent = 'Paste a URL first.'; return; }
+            if (!hook.ok) { out.textContent = 'The URL must start with https://'; return; }
+            if (!/\/exec(\?.*)?$/.test(hook.value)) {
+                out.textContent = 'The URL should end in /exec. Use the Web app URL from Deploy, not the editor link.';
+                return;
+            }
+            const dup = classes.find(c => c.id !== editingClassId && c.webhookUrl === hook.value);
+            if (dup) {
+                out.textContent = `“${dup.name}” already uses this exact URL. Each class needs its own sheet and URL.`;
+                return;
+            }
+            if (navigator.onLine === false) { out.textContent = 'You are offline.'; return; }
+            out.textContent = 'Testing…';
+            try {
+                const res = await fetch(hook.value, { method: 'GET' });
+                const reply = JSON.parse(await res.text());
+                if (reply && reply.ok) {
+                    out.textContent = '✓ Connected' + (reply.sheet ? ` to “${reply.sheet}”.` : '.');
+                } else {
+                    out.textContent = 'Reached Google but the script did not reply correctly.';
+                }
+            } catch (e) {
+                out.textContent = 'Could not connect. In Apps Script: Deploy > Manage deployments, set access to Anyone, and use the /exec URL.';
+            }
+        });
+
         function updateSyncButtonVisibility() {
             const cls = classes.find(c => c.id === activeClassId);
-            document.getElementById('syncSheetBtn').classList.toggle('hidden', !(cls && cls.webhookUrl));
+            document.getElementById('syncSheetBtn').classList.toggle('hidden', !(cls && cls.webhookUrl && activeTab !== 'activity'));
         }
 
         document.getElementById('syncSheetBtn').addEventListener('click', async () => {
@@ -1472,6 +1574,7 @@
 
             classRecords.forEach(rec => {
                 const presentCount = cls.students.filter(s => rec.attendance?.[s] === 'present').length;
+                const lateCount = cls.students.filter(s => rec.attendance?.[s] === 'late').length;
                 const absentCount = cls.students.filter(s => rec.attendance?.[s] === 'absent').length;
                 const hwDoneCount = cls.students.filter(s => rec.homework?.[s] === 'done').length;
 
@@ -1483,7 +1586,7 @@
                         <span style="font-size:0.68rem;color:var(--subtle-fg);">${rec.exportedAt ? 'Exported ' + escapeHtml(rec.exportedAt) : 'Saved'}</span>
                     </div>
                     <div style="font-size:0.75rem;color:var(--muted-fg);">
-                        In Class: <strong>${presentCount}</strong> • Absent: <strong>${absentCount}</strong> • Homework Done: <strong>${hwDoneCount}/${cls.students.length}</strong>
+                        In Class: <strong>${presentCount}</strong> • Late: <strong>${lateCount}</strong> • Absent: <strong>${absentCount}</strong> • Homework Done: <strong>${hwDoneCount}/${cls.students.length}</strong>
                     </div>
                 `;
                 const openBtn = document.createElement('button');
@@ -1519,12 +1622,15 @@
                     homeworkTopic: '',
                     exportedAt: '',
                     attTouched: false,
-                    hwTouched: false
+                    hwTouched: false,
+                    activities: [],
+                    actTouched: false
                 };
             } else {
                 const rec = records[key];
                 if (!rec.attendance) rec.attendance = {};
                 if (!rec.homework) rec.homework = {};
+                if (!Array.isArray(rec.activities)) rec.activities = [];
                 cls.students.forEach(s => {
                     if (!rec.attendance[s]) rec.attendance[s] = 'present';
                     if (!rec.homework[s]) rec.homework[s] = 'done';
@@ -1576,12 +1682,19 @@
 
         function switchClassTab(tab) {
             activeTab = tab;
+            const isAct = (tab === 'activity');
             document.getElementById('tabAttendance').classList.toggle('active', tab === 'attendance');
             document.getElementById('tabHomework').classList.toggle('active', tab === 'homework');
+            document.getElementById('tabActivity').classList.toggle('active', isAct);
             document.getElementById('homeworkTopicBox').classList.toggle('hidden', tab !== 'homework');
+            document.getElementById('summaryBar').classList.toggle('hidden', isAct);
+            document.getElementById('studentSortSelect').parentElement.classList.toggle('hidden', isAct);
+            document.getElementById('studentRollList').classList.toggle('hidden', isAct);
+            document.getElementById('activityPanel').classList.toggle('hidden', !isAct);
             document.getElementById('markAllPositiveBtn').textContent = tab === 'attendance' ? 'All Present' : 'All Done';
             document.getElementById('exportPngBtn').querySelector('span').textContent =
-                tab === 'attendance' ? 'Export Attendance PNG' : 'Export Homework PNG';
+                { attendance: 'Export Attendance PNG', homework: 'Export Homework PNG', activity: 'Export Activity PNG' }[tab];
+            updateSyncButtonVisibility();
             renderActiveClassRoll();
         }
 
@@ -1611,13 +1724,26 @@
             document.getElementById('homeworkTopicInput').value = rec.homeworkTopic || '';
             document.getElementById('studentSortSelect').value = STUDENT_SORTS.includes(cls.sortMode) ? cls.sortMode : 'custom';
 
+            if (activeTab === 'activity') {
+                renderActivityEditor(rec);
+                return;
+            }
+
+            const isAtt = (activeTab === 'attendance');
+            const map = isAtt ? rec.attendance : rec.homework;
+            // Three choices per student. "Late" counts as 0.5.
+            const defs = isAtt
+                ? [{ v: 'present', t: 'Present', c: 'present' }, { v: 'late', t: 'Late', c: 'late' }, { v: 'absent', t: 'Absent', c: 'absent' }]
+                : [{ v: 'done', t: 'Done', c: 'hw-done' }, { v: 'late', t: 'Late', c: 'late' }, { v: 'missing', t: 'Missing', c: 'hw-missing' }];
+
             const listEl = document.getElementById('studentRollList');
             listEl.innerHTML = '';
-
-            let countPos = 0;
-            let countNeg = 0;
+            const tally = {};
 
             getSortedStudents(cls).forEach((studentName, idx) => {
+                const cur = map[studentName] || defs[0].v;
+                tally[cur] = (tally[cur] || 0) + 1;
+
                 const row = document.createElement('div');
                 row.className = 'student-row';
 
@@ -1628,69 +1754,137 @@
                 const btnGroup = document.createElement('div');
                 btnGroup.className = 'status-btn-group';
 
-                if (activeTab === 'attendance') {
-                    const status = rec.attendance[studentName] || 'present';
-                    if (status === 'present') countPos++; else countNeg++;
-
-                    const presBtn = document.createElement('button');
-                    presBtn.className = `status-btn present ${status === 'present' ? 'active' : ''}`;
-                    presBtn.textContent = 'Present';
-                    presBtn.addEventListener('click', () => {
-                        rec.attendance[studentName] = 'present';
-                        rec.attTouched = true;
+                defs.forEach(d => {
+                    const btn = document.createElement('button');
+                    btn.className = `status-btn ${d.c} ${cur === d.v ? 'active' : ''}`;
+                    btn.textContent = d.t;
+                    btn.addEventListener('click', () => {
+                        map[studentName] = d.v;
+                        if (isAtt) rec.attTouched = true; else rec.hwTouched = true;
                         saveAllData();
                         renderActiveClassRoll();
                     });
-
-                    const absBtn = document.createElement('button');
-                    absBtn.className = `status-btn absent ${status === 'absent' ? 'active' : ''}`;
-                    absBtn.textContent = 'Absent';
-                    absBtn.addEventListener('click', () => {
-                        rec.attendance[studentName] = 'absent';
-                        rec.attTouched = true;
-                        saveAllData();
-                        renderActiveClassRoll();
-                    });
-
-                    btnGroup.appendChild(presBtn);
-                    btnGroup.appendChild(absBtn);
-                } else {
-                    const hwStatus = rec.homework[studentName] || 'done';
-                    if (hwStatus === 'done') countPos++; else countNeg++;
-
-                    const doneBtn = document.createElement('button');
-                    doneBtn.className = `status-btn hw-done ${hwStatus === 'done' ? 'active' : ''}`;
-                    doneBtn.textContent = 'Done';
-                    doneBtn.addEventListener('click', () => {
-                        rec.homework[studentName] = 'done';
-                        rec.hwTouched = true;
-                        saveAllData();
-                        renderActiveClassRoll();
-                    });
-
-                    const missBtn = document.createElement('button');
-                    missBtn.className = `status-btn hw-missing ${hwStatus === 'missing' ? 'active' : ''}`;
-                    missBtn.textContent = 'Missing';
-                    missBtn.addEventListener('click', () => {
-                        rec.homework[studentName] = 'missing';
-                        rec.hwTouched = true;
-                        saveAllData();
-                        renderActiveClassRoll();
-                    });
-
-                    btnGroup.appendChild(doneBtn);
-                    btnGroup.appendChild(missBtn);
-                }
+                    btnGroup.appendChild(btn);
+                });
 
                 row.appendChild(label);
                 row.appendChild(btnGroup);
                 listEl.appendChild(row);
             });
 
-            document.getElementById('liveCountText').textContent = activeTab === 'attendance'
-                ? `In Class: ${countPos} • Absent: ${countNeg}`
-                : `Done: ${countPos} • Missing: ${countNeg}`;
+            const t = (k) => tally[k] || 0;
+            document.getElementById('liveCountText').textContent = isAtt
+                ? `In Class: ${t('present')} • Late: ${t('late')} • Absent: ${t('absent')}`
+                : `Done: ${t('done')} • Late: ${t('late')} • Missing: ${t('missing')}`;
         }
+
+        /* =========================================================
+           DAILY ACTIVITY TAB (editor)
+        ========================================================= */
+        const ACTIVITY_LABELS = {
+            subject: 'Subject / Description',
+            project: 'Project',
+            presentation: 'Presentation',
+            speech: 'Speech',
+            homework: 'Homework'
+        };
+        const ACTIVITY_PLACEHOLDERS = {
+            project: 'e.g. Poster about healthy food, due Friday',
+            presentation: 'e.g. Group presentations, groups 1 and 2',
+            speech: 'e.g. Two-minute speeches about hobbies',
+            homework: 'e.g. Study for tests'
+        };
+
+        // Subjects first, then the notes (project, presentation, speech, homework), each in the order added
+        function orderedActivities(rec) {
+            const arr = Array.isArray(rec.activities) ? rec.activities : [];
+            return arr.filter(a => a.type === 'subject').concat(arr.filter(a => a.type !== 'subject'));
+        }
+
+        function renderActivityEditor(rec) {
+            const list = document.getElementById('activityList');
+            list.innerHTML = '';
+            const items = orderedActivities(rec);
+
+            if (items.length === 0) {
+                list.innerHTML = `<div class="panel" style="text-align:center;padding:1.4rem 1rem;color:var(--muted-fg);font-size:0.8rem;">Nothing added yet. Tap a button above to add a subject, project, presentation, speech or homework.</div>`;
+                return;
+            }
+
+            function makeField(labelText, value, multiline, placeholder, onInput) {
+                const wrap = document.createElement('div');
+                wrap.className = 'field-group';
+                const lab = document.createElement('label');
+                lab.className = 'field-label';
+                lab.textContent = labelText;
+                const el = document.createElement(multiline ? 'textarea' : 'input');
+                if (multiline) el.rows = 2; else el.type = 'text';
+                el.className = multiline ? 'field-textarea' : 'field-input';
+                el.placeholder = placeholder;
+                el.value = value || '';
+                el.addEventListener('input', () => {
+                    onInput(el.value);
+                    rec.actTouched = true;
+                    saveAllData();
+                });
+                wrap.appendChild(lab);
+                wrap.appendChild(el);
+                return wrap;
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'act-card';
+                card.setAttribute('data-id', item.id);
+
+                const head = document.createElement('div');
+                head.className = 'act-head';
+                const title = document.createElement('span');
+                title.className = 'act-title';
+                title.textContent = ACTIVITY_LABELS[item.type] || item.type;
+                const del = document.createElement('button');
+                del.type = 'button';
+                del.className = 'act-del';
+                del.setAttribute('aria-label', 'Remove this item');
+                del.textContent = '×';
+                del.addEventListener('click', () => {
+                    rec.activities = rec.activities.filter(a => a.id !== item.id);
+                    rec.actTouched = true;
+                    saveAllData();
+                    renderActiveClassRoll();
+                });
+                head.appendChild(title);
+                head.appendChild(del);
+                card.appendChild(head);
+
+                if (item.type === 'subject') {
+                    card.appendChild(makeField('Subject', item.subject, false, 'e.g. IELTS', v => { item.subject = v; }));
+                    card.appendChild(makeField('Description', item.text, true, 'e.g. Listening practice test review', v => { item.text = v; }));
+                } else {
+                    card.appendChild(makeField('Details', item.text, true, ACTIVITY_PLACEHOLDERS[item.type] || '', v => { item.text = v; }));
+                }
+                list.appendChild(card);
+            });
+        }
+
+        document.querySelectorAll('#activityAddRow [data-add]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!activeClassId) return;
+                const dateStr = document.getElementById('sessionDateInput').value || getTodayISO();
+                const rec = getOrCreateRecord(activeClassId, dateStr);
+                const id = 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                rec.activities.push({ id, type: btn.getAttribute('data-add'), subject: '', text: '' });
+                rec.actTouched = true;
+                saveAllData();
+                renderActiveClassRoll();
+                const card = document.querySelector('#activityList [data-id="' + id + '"]');
+                if (card) {
+                    const first = card.querySelector('input, textarea');
+                    if (first) first.focus();
+                    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+            });
+        });
 
         /* =========================================================
            PNG REPORT GENERATOR (CANVAS) & SAVE DAY
@@ -1763,6 +1957,11 @@
             const dateStr = document.getElementById('sessionDateInput').value || getTodayISO();
             const rec = getOrCreateRecord(activeClassId, dateStr);
 
+            if (activeTab === 'activity') {
+                await exportActivityPng(cls, rec, dateStr);
+                return;
+            }
+
             const exportTimestamp = getDeviceTimestamp();
             rec.exportedAt = exportTimestamp;
             if (activeTab === 'attendance') rec.attTouched = true; else rec.hwTouched = true;
@@ -1802,6 +2001,13 @@
             const groupALines = namesToLines(groupANames);
             const groupBLines = namesToLines(groupBNames);
 
+            // "Late" students (worth 0.5). The box only appears when someone is late.
+            const lateLabel = isAttendance ? 'Late:' : 'Homework Late:';
+            const lateNames = getSortedStudents(cls).filter(s =>
+                (isAttendance ? rec.attendance[s] : rec.homework[s]) === 'late'
+            );
+            const lateLines = lateNames.length ? namesToLines(lateNames) : [];
+
             const footerLine1 = `${isAttendance ? 'Attendance' : 'Homework'} done by Teacher ${teacherName}`;
             const footerLine2 = `It is accurate as of ${exportTimestamp}`;
 
@@ -1813,6 +2019,7 @@
             totalH += 32;
             totalH += 56 + groupALines.length * 34 + 28;
             totalH += 24;
+            if (lateNames.length) totalH += 56 + lateLines.length * 34 + 28 + 24;
             totalH += 56 + groupBLines.length * 34 + 28;
             totalH += 44;
             totalH += 88;
@@ -1897,6 +2104,28 @@
 
             y += boxAH + 22;
 
+            if (lateNames.length) {
+                const boxLH = 52 + lateLines.length * 34 + 22;
+                ctx.fillStyle = '#eff6ff';
+                ctx.strokeStyle = '#93c5fd';
+                ctx.lineWidth = 2;
+                rrPath(ctx, pad, y, contentW, boxLH, 16);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#1e40af';
+                ctx.font = '800 24px system-ui, -apple-system, sans-serif';
+                ctx.fillText(`${lateLabel} (${lateNames.length})`, pad + 20, y + 36);
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '500 23px system-ui, -apple-system, sans-serif';
+                lateLines.forEach((line, i) => {
+                    ctx.fillText(line, pad + 20, y + 72 + i * 34);
+                });
+
+                y += boxLH + 22;
+            }
+
             const boxBH = 52 + groupBLines.length * 34 + 22;
             ctx.fillStyle = isAttendance ? '#fef2f2' : '#fffbeb';
             ctx.strokeStyle = isAttendance ? '#fca5a5' : '#fcd34d';
@@ -1943,29 +2172,301 @@
             showToast('Day saved & PNG created');
         });
 
-        document.getElementById('downloadPngBtn').addEventListener('click', () => {
-            if (!lastExportDataUrl) return;
+        /* =========================================================
+           DAILY ACTIVITY PNG
+        ========================================================= */
+        function formatLongDate(isoDate) {
+            if (!isoDate) return '';
+            const [y, m, d] = isoDate.split('-').map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Wraps text to a width. Keeps the teacher's line breaks and splits very long words
+        // (for example Khmer, which has few spaces) so nothing runs off the image.
+        function wrapRich(ctx, text, maxW) {
+            const out = [];
+            String(text == null ? '' : text).split(/\r?\n/).forEach(par => {
+                if (!par.trim()) { out.push(''); return; }
+                let cur = '';
+                par.split(' ').forEach(word => {
+                    let w = word;
+                    while (ctx.measureText(w).width > maxW) {
+                        if (cur) { out.push(cur); cur = ''; }
+                        let chunk = '';
+                        for (const ch of Array.from(w)) {
+                            if (chunk && ctx.measureText(chunk + ch).width > maxW) break;
+                            chunk += ch;
+                        }
+                        out.push(chunk);
+                        w = w.slice(chunk.length);
+                    }
+                    const test = cur ? cur + ' ' + w : w;
+                    if (cur && ctx.measureText(test).width > maxW) { out.push(cur); cur = w; }
+                    else { cur = test; }
+                });
+                if (cur) out.push(cur);
+            });
+            while (out.length > 1 && out[out.length - 1] === '') out.pop();
+            return out.length ? out : [''];
+        }
+
+        async function exportActivityPng(cls, rec, dateStr) {
+            const items = orderedActivities(rec).filter(it => (it.subject || '').trim() || (it.text || '').trim());
+            if (items.length === 0) {
+                showToast('Add at least one item first');
+                return;
+            }
+            rec.actTouched = true;
+            saveAllData();
+
+            const subjects = items.filter(it => it.type === 'subject');
+            const notes = items.filter(it => it.type !== 'subject');
+
+            const exportTimestamp = getDeviceTimestamp();
+            const schoolName = (settings.schoolName || '').trim() || 'School Report';
+            const schoolMotto = (settings.schoolMotto || '').trim();
+            const teacherName = (settings.teacherName || '').trim() || 'Teacher';
+            const logoImg = await loadImageSafe(settings.schoolLogoDataUrl || 'icon.png');
+
+            const FONT = 'system-ui, -apple-system, sans-serif';
+            const width = 900;
+            const pad = 54;
+            const contentW = width - pad * 2;
+            const LH = 34;
+            const PAD_X = 24;
+            const innerW = contentW - PAD_X * 2;
+            const mCtx = document.createElement('canvas').getContext('2d');
+
+            function makeFieldLayout(label, text, labelFont, textFont) {
+                mCtx.font = labelFont;
+                const lw = mCtx.measureText(label + ' ').width;
+                mCtx.font = textFont;
+                return { label, lw, lines: wrapRich(mCtx, text, innerW - lw), labelFont, textFont };
+            }
+            const fieldsHeight = (fields, gap) =>
+                fields.reduce((sum, f) => sum + f.lines.length * LH, 0) + Math.max(0, fields.length - 1) * gap;
+
+            // Label on the first line, text wrapped with a hanging indent
+            function drawFields(ctx, fields, x, yTop, gap, labelColor, textColor) {
+                let yy = yTop;
+                fields.forEach((f, fi) => {
+                    f.lines.forEach((line, i) => {
+                        const base = yy + 26;
+                        if (i === 0) {
+                            ctx.fillStyle = labelColor;
+                            ctx.font = f.labelFont;
+                            ctx.fillText(f.label, x, base);
+                        }
+                        ctx.fillStyle = textColor;
+                        ctx.font = f.textFont;
+                        ctx.fillText(line, x + f.lw, base);
+                        yy += LH;
+                    });
+                    if (fi < fields.length - 1) yy += gap;
+                });
+                return yy;
+            }
+
+            const subjectCards = subjects.map(it => {
+                const fields = [];
+                if ((it.subject || '').trim()) fields.push(makeFieldLayout('Subject:', it.subject.trim(), `800 26px ${FONT}`, `700 26px ${FONT}`));
+                if ((it.text || '').trim()) fields.push(makeFieldLayout('Description:', it.text.trim(), `700 23px ${FONT}`, `500 23px ${FONT}`));
+                return { fields, h: 18 + fieldsHeight(fields, 6) + 14 };
+            });
+            const noteFields = notes.map(it =>
+                makeFieldLayout((ACTIVITY_LABELS[it.type] || 'Note') + ':', it.text.trim(), `800 23px ${FONT}`, `500 23px ${FONT}`)
+            );
+            const notesH = noteFields.length ? 52 + fieldsHeight(noteFields, 10) + 14 : 0;
+
+            // Height: header block ends at 272, then each card, then footer
+            let endY = 272;
+            subjectCards.forEach(c => { endY += c.h + 18; });
+            if (noteFields.length) endY += notesH + 18;
+            const dividerY = endY + 16;
+            const totalH = dividerY + 68 + 60;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = totalH;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, totalH);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(16, 16, width - 32, totalH - 32);
+
+            // ---- Header: logo, school name, class, date ----
+            let y = 56;
+            const logoSize = 84;
+            let textStartX = pad;
+            if (logoImg) {
+                const usedW = drawSchoolLogo(ctx, logoImg, settings.logoShape || 'rect', pad, y, logoSize);
+                textStartX = pad + usedW + 22;
+            }
+            ctx.fillStyle = '#0f172a';
+            ctx.font = `800 32px ${FONT}`;
+            ctx.fillText(schoolName, textStartX, y + (schoolMotto ? 38 : 52));
+            if (schoolMotto) {
+                ctx.fillStyle = '#475569';
+                ctx.font = `italic 500 21px ${FONT}`;
+                ctx.fillText(schoolMotto, textStartX, y + 70);
+            }
+            y += logoSize + 24;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pad, y);
+            ctx.lineTo(width - pad, y);
+            ctx.stroke();
+            y += 38;
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = `700 24px ${FONT}`;
+            ctx.fillText(`Class: ${cls.name}`, pad, y);
+            y += 36;
+            ctx.fillText(`Date: ${formatLongDate(dateStr)}`, pad, y);
+            y += 34;
+
+            // ---- Subjects and descriptions ----
+            subjectCards.forEach(c => {
+                ctx.fillStyle = '#eef2ff';
+                ctx.strokeStyle = '#a5b4fc';
+                ctx.lineWidth = 2;
+                rrPath(ctx, pad, y, contentW, c.h, 16);
+                ctx.fill();
+                ctx.stroke();
+                drawFields(ctx, c.fields, pad + PAD_X, y + 18, 6, '#3730a3', '#0f172a');
+                y += c.h + 18;
+            });
+
+            // ---- Notes at the bottom (only if any were added) ----
+            if (noteFields.length) {
+                ctx.fillStyle = '#f8fafc';
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                rrPath(ctx, pad, y, contentW, notesH, 16);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#334155';
+                ctx.font = `800 24px ${FONT}`;
+                ctx.fillText('Notes', pad + PAD_X, y + 36);
+                drawFields(ctx, noteFields, pad + PAD_X, y + 52, 10, '#334155', '#0f172a');
+                y += notesH + 18;
+            }
+
+            // ---- Footer ----
+            y += 16;
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pad, y);
+            ctx.lineTo(width - pad, y);
+            ctx.stroke();
+            y += 36;
+            ctx.fillStyle = '#1e293b';
+            ctx.font = `700 22px ${FONT}`;
+            ctx.fillText(`Daily activity recorded by Teacher ${teacherName}`, pad, y);
+            y += 32;
+            ctx.fillStyle = '#475569';
+            ctx.font = `500 20px ${FONT}`;
+            ctx.fillText(`It is accurate as of ${exportTimestamp}`, pad, y);
+
+            lastExportDataUrl = canvas.toDataURL('image/png');
+            const safeClass = cls.name.replace(/[^a-z0-9]+/gi, '_');
+            lastExportFilename = `${safeClass}_activity_${dateStr}.png`;
+
+            document.getElementById('exportedPreviewImg').src = lastExportDataUrl;
+            openModal('exportPreviewModal');
+            showToast('Activity PNG created');
+        }
+
+        /* ---------- File saving & sharing helpers (browser, PWA and Capacitor APK) ---------- */
+        function dataUrlToBlob(dataUrl) {
+            const parts = dataUrl.split(',');
+            const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+            const bin = atob(parts[1]);
+            const arr = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            return new Blob([arr], { type: mime });
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(String(r.result).split(',')[1]);
+                r.onerror = reject;
+                r.readAsDataURL(blob);
+            });
+        }
+
+        // Returns a native Capacitor plugin if this is the APK and the plugin is installed
+        function capPlugin(name) {
+            try {
+                return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
+            } catch (e) { return null; }
+        }
+
+        // Saves a file: native Documents folder in the APK, otherwise a normal browser download
+        async function saveFile(filename, blob, dataUrl, okMsg) {
+            const FS = capPlugin('Filesystem');
+            if (FS) {
+                try {
+                    const data = await blobToBase64(blob);
+                    await FS.writeFile({ path: filename, data, directory: 'DOCUMENTS', recursive: true });
+                    showToast('Saved to Documents: ' + filename);
+                    return;
+                } catch (e) { /* fall through to the browser download */ }
+            }
             const a = document.createElement('a');
-            a.href = lastExportDataUrl;
-            a.download = lastExportFilename;
+            a.href = dataUrl;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            if (okMsg) showToast(okMsg);
+        }
+
+        document.getElementById('downloadPngBtn').addEventListener('click', async () => {
+            if (!lastExportDataUrl) return;
+            try {
+                await saveFile(lastExportFilename, dataUrlToBlob(lastExportDataUrl), lastExportDataUrl, 'Download started');
+            } catch (err) {
+                showToast('Download failed. Press and hold the image to save it.');
+            }
         });
 
         document.getElementById('sharePngBtn').addEventListener('click', async () => {
             if (!lastExportDataUrl) return;
             try {
-                const res = await fetch(lastExportDataUrl);
-                const blob = await res.blob();
-                const file = new File([blob], lastExportFilename, { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: lastExportFilename });
-                } else {
-                    showToast('Use Download PNG on this device');
+                const blob = dataUrlToBlob(lastExportDataUrl);
+
+                // 1) Native share sheet in the Capacitor APK (needs the Filesystem and Share plugins)
+                const FS = capPlugin('Filesystem');
+                const NativeShare = capPlugin('Share');
+                if (FS && NativeShare) {
+                    const data = await blobToBase64(blob);
+                    const written = await FS.writeFile({ path: lastExportFilename, data, directory: 'CACHE' });
+                    await NativeShare.share({ title: lastExportFilename, url: written.uri, dialogTitle: 'Share report' });
+                    return;
                 }
+
+                // 2) Web Share API (Chrome, installed PWA). Tried even when canShare is missing,
+                //    because some WebViews support sharing files but do not report it.
+                if (navigator.share) {
+                    const file = new File([blob], lastExportFilename, { type: 'image/png' });
+                    await navigator.share({ files: [file], title: lastExportFilename });
+                    return;
+                }
+
+                showToast('This device cannot share images from here. Use Download PNG, or press and hold the image.');
             } catch (err) {
-                showToast('Share cancelled');
+                if (err && err.name === 'AbortError') {
+                    showToast('Share cancelled');
+                } else {
+                    showToast('Share failed (' + ((err && err.name) || 'error') + '). Use Download PNG, or press and hold the image.');
+                }
             }
         });
 
@@ -2042,17 +2543,13 @@
                     classes: picked
                     // History is intentionally never included
                 };
-                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `classroom_helper_backup_${getTodayISO()}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                const jsonText = JSON.stringify(payload, null, 2);
+                const blob = new Blob([jsonText], { type: 'application/json' });
+                // data: URL like the original version (blob: URLs fail in some phone WebViews)
+                const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonText);
                 closeModal('backupModal');
-                showToast('Backup exported');
+                saveFile(`classroom_helper_backup_${getTodayISO()}.json`, blob, dataUrl, 'Backup exported')
+                    .catch(() => showToast('Backup export failed'));
             } else {
                 if (!pendingImport) return;
                 let addedC = 0, updatedC = 0, didSettings = false;
